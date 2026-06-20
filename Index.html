@@ -9,6 +9,7 @@
 <link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MISE">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
@@ -199,8 +200,13 @@ const DISHES=[
 ];
 const FEATURED_ID="pa-amb-oli";
 
+/* ------------------------------ SUPABASE ---------------------------- */
+const SUPABASE_URL="https://msmwaldktlrxhxvarepj.supabase.co";
+const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zbXdhbGRrdGxyeGh4dmFyZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzQwNzcsImV4cCI6MjA5NzU1MDA3N30.Lpr8P9SsTG_7i_iPORqu2gt9pffpnvaZ_oqx5wsCQwI";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+
 /* ------------------------------ STATE ------------------------------- */
-const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
+const S={tab:"home",user:null,openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
 let T={id:null,total:0,left:0,running:false,done:false};
 
 /* ----------------------------- HELPERS ------------------------------ */
@@ -367,6 +373,16 @@ function savedHTML(){
   </div>`;
 }
 
+function accountBlockHTML(){
+  if(S.loggedIn&&S.user){
+    return `<div class="glasspanel" style="border-radius:20px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+      <div style="min-width:0;"><div class="mono" style="font-size:10px;letter-spacing:1.5px;color:var(--inkSoft);text-transform:uppercase;">Signed in</div><div style="font-weight:600;font-size:14px;margin-top:3px;color:var(--oliveDeep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${S.user.email}</div></div>
+      <button class="press card" onclick="signOut()" style="flex:0 0 auto;border-radius:100px;padding:9px 16px;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--ink);">LOG OUT</button>
+    </div>`;
+  }
+  return `<button onclick="ensureLogin()" class="press" style="width:100%;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,rgba(27,59,140,.9),rgba(62,99,181,.85));backdrop-filter:blur(10px);color:#fff;border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:0 10px 24px rgba(27,59,140,.25);">${ic("lock",{s:20})}<div style="text-align:left;flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Log in</div><div style="font-size:13px;color:rgba(255,255,255,.9);">Save dishes, cook mode & keep your Pro</div></div>${ic("arrow-right",{s:20})}</button>`;
+}
+
 function aboutHTML(){
   const link=(i,l)=>`<button class="press card" style="flex:1;padding:14px 0;border-radius:16px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink);">${ic(i,{s:22,sw:2})}<span class="mono" style="font-size:11px;font-weight:700;letter-spacing:1px;">${l}</span></button>`;
   return `<div>
@@ -376,6 +392,7 @@ function aboutHTML(){
       <p style="font-size:15px;line-height:1.55;color:var(--inkSoft);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
     </div>
     <div style="padding:20px 16px;">
+      ${accountBlockHTML()}
       <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div><span class="eyebrow">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:var(--oliveDeep);line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
         ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
@@ -525,7 +542,7 @@ function proHTML(){
       <h2 class="display" style="font-weight:800;font-size:28px;letter-spacing:-.6px;line-height:1.05;margin:4px 0 18px;">Cook smarter, not just tastier.</h2>
       <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">${perks.map(p=>`<div style="display:flex;gap:14px;align-items:flex-start;"><div style="width:40px;height:40px;border-radius:12px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.15);display:grid;place-items:center;flex:0 0 40px;">${ic(p[0],{s:19,c:"var(--sage)"})}</div><div><div style="font-weight:700;font-size:15.5px;">${p[1]}</div><div style="font-size:13.5px;color:rgba(255,255,255,.7);line-height:1.4;">${p[2]}</div></div></div>`).join("")}</div>
       <button class="btn-flame press" onclick="unlockPro()">Go Pro · ${PRO_PRICE}/mo</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">DEMO — UNLOCKS INSTANTLY HERE</div>
+      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">PREVIEW ONLY · REAL PRO SAVES TO YOUR ACCOUNT</div>
     </div>
   </div>`;
 }
@@ -539,13 +556,18 @@ function loginHTML(){
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
       <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, marking what you've cooked, and cooking mode are for logged-in cooks only.</p>
-      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:14px;">
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 22px;">Saved dishes, cook mode, and Pro live with your account — so they follow you to any device.</p>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:12px;">
         ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
-        <input type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
+        <input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
       </div>
-      <button class="btn-flame press" onclick="doLogin()">${ic("lock",{s:18})} CONTINUE</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:14px;">DEMO — LOGS YOU IN INSTANTLY HERE</div>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:12px;">
+        ${ic("lock",{s:18,c:"rgba(255,255,255,.6)"})}
+        <input id="authPass" type="password" placeholder="Password" autocomplete="current-password" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
+      </div>
+      <div id="authMsg" style="font-size:13px;color:var(--sage);text-align:center;margin-bottom:12px;min-height:16px;"></div>
+      <button class="btn-flame press" onclick="doLogin()">${ic("lock",{s:18})} LOG IN</button>
+      <button class="press" onclick="doSignUp()" style="width:100%;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;margin-top:14px;">NEW HERE? CREATE AN ACCOUNT</button>
     </div>
   </div>`;
 }
@@ -577,7 +599,37 @@ function openScan(){if(!ensureLogin())return;if(S.pro){S.showScan=true;S.scanPha
 function closeScan(){S.showScan=false;render();}
 function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;render();return false;}
 function closeLogin(){S.showLogin=false;render();}
-function doLogin(){S.loggedIn=true;S.showLogin=false;render();}
+function authMsg(m){const el=document.getElementById("authMsg");if(el)el.textContent=m;}
+function authVals(){return{email:(document.getElementById("authEmail")||{}).value,pass:(document.getElementById("authPass")||{}).value};}
+async function refreshAuth(){
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    S.user = session ? session.user : null;
+    S.loggedIn = !!S.user;
+    if(S.user){
+      const { data } = await sb.from("profiles").select("is_pro").eq("id",S.user.id).single();
+      S.pro = !!(data && data.is_pro);
+    } else { S.pro = false; }
+  }catch(e){ S.user=null; S.loggedIn=false; S.pro=false; }
+  render();
+}
+async function doLogin(){
+  const {email,pass}=authVals();
+  if(!email||!pass){authMsg("Enter your email and password.");return;}
+  authMsg("Logging in…");
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){authMsg(error.message);return;}
+  S.showLogin=false; await refreshAuth();
+}
+async function doSignUp(){
+  const {email,pass}=authVals();
+  if(!email||!pass){authMsg("Enter an email and a password (6+ characters).");return;}
+  authMsg("Creating your account…");
+  const {error}=await sb.auth.signUp({email,password:pass});
+  if(error){authMsg(error.message);return;}
+  S.showLogin=false; await refreshAuth();
+}
+async function signOut(){ await sb.auth.signOut(); await refreshAuth(); }
 function scanGo(){S.scanPhase="scanning";render();setTimeout(()=>{S.scanPhase="results";render();},1700);}
 function toggleFound(k){S.found[k]=!S.found[k];render();}
 function openFromScan(id){S.showScan=false;S.openId=id;S.servings=null;nav();}
@@ -629,6 +681,7 @@ function appToast(){const t=document.getElementById("toast");t.textContent="🚀
 })();
 
 render();
+refreshAuth();
 </script>
 </body>
 </html>
