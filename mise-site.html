@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MISE — cook like you mean it</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --ink:#221F1A; --inkSoft:#565147; --paper:#EFE9DB; --card:#FBF8F0;
+    --olive:#3C4A2C; --oliveDeep:#2C361F; --sage:#A7B088;
+    --flame:#E8552D; --cream:#E7DFCC; --line:rgba(34,31,26,.12);
+    --display:'Bricolage Grotesque',sans-serif; --body:'Hanken Grotesk',system-ui,sans-serif; --mono:'Space Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  ::-webkit-scrollbar{width:0;height:0;}
+  body{background:#262318;font-family:var(--body);color:var(--ink);}
+  svg{vertical-align:middle;display:inline-block;}
+  button{font-family:inherit;}
+  .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  input{font-family:inherit;}
+
+  /* MARQUEE */
+  .marquee{position:sticky;top:0;z-index:40;background:var(--flame);color:#fff;display:flex;align-items:center;height:38px;overflow:hidden;border-bottom:1px solid rgba(0,0,0,.1);}
+  .marquee-track{display:inline-flex;white-space:nowrap;animation:scroll 26s linear infinite;flex:1;}
+  .marquee-track span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;padding-right:40px;display:inline-flex;align-items:center;gap:8px;}
+  .marquee-cta{flex:0 0 auto;background:var(--oliveDeep);color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 14px;border:none;cursor:pointer;height:100%;display:flex;align-items:center;gap:6px;}
+  @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  @media(prefers-reduced-motion:reduce){.marquee-track{animation:none;}}
+
+  .app{max-width:480px;margin:0 auto;background:var(--paper);min-height:100vh;position:relative;padding-bottom:78px;box-shadow:0 0 60px rgba(0,0,0,.3);}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--flame);font-weight:700;}
+  .mono{font-family:var(--mono);} .display{font-family:var(--display);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;}
+  .lift{transition:transform .25s cubic-bezier(.2,.7,.2,1);cursor:pointer;}
+  .lift:active{transform:scale(.985);}
+  @media(hover:hover){.lift:hover{transform:translateY(-4px);}}
+  .press{transition:transform .12s;cursor:pointer;} .press:active{transform:scale(.94);}
+
+  @keyframes up{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  @keyframes pop{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:none;}}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  @keyframes sheet{from{transform:translateY(100%);}to{transform:none;}}
+  @keyframes scanline{0%{top:6%;}100%{top:88%;}}
+  .up{animation:up .5s cubic-bezier(.2,.7,.2,1) both;}
+  .pop{animation:pop .35s cubic-bezier(.2,.7,.2,1) both;}
+  .sheet{animation:sheet .32s cubic-bezier(.2,.7,.2,1) both;}
+
+  .meta{display:flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--inkSoft);align-items:center;}
+  .meta .i{display:inline-flex;align-items:center;gap:5px;}
+  .pro-pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);background:var(--sage);padding:3px 8px;border-radius:100px;}
+
+  .chip{flex:0 0 auto;font-family:var(--body);font-weight:600;font-size:13.5px;padding:8px 15px;border-radius:100px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--inkSoft);}
+  .chip.active{border-color:var(--olive);background:var(--olive);color:#fff;}
+
+  .btn-flame{height:56px;border-radius:16px;border:none;cursor:pointer;background:var(--flame);color:#fff;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(232,85,45,.35);width:100%;}
+
+  .nav{position:fixed;bottom:0;left:0;right:0;background:var(--oliveDeep);max-width:480px;margin:0 auto;display:flex;padding:10px 4px 16px;border-top:1px solid rgba(255,255,255,.08);z-index:30;}
+  .navbtn{flex:1;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(255,255,255,.45);}
+  .navbtn.active{color:#fff;}
+  .navbtn span{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;}
+  .navdot{width:5px;height:5px;border-radius:100px;background:var(--flame);margin-top:1px;}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--oliveDeep);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:90;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+</style>
+</head>
+<body>
+
+<div class="marquee">
+  <div class="marquee-track" id="mq"></div>
+  <button class="marquee-cta" onclick="appToast()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> GET THE APP</button>
+</div>
+
+<div class="app" id="app">
+  <div id="screen"></div>
+  <div id="nav"></div>
+</div>
+<div id="overlay"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ------------------------------- DATA ------------------------------- */
+const BRAND="MISE", TAGLINE="everything in its place", HANDLE="@mise.cooks", PRO_PRICE="€3.99";
+const MEALS=[
+  {id:"breakfast",label:"Breakfast",icon:"coffee"},
+  {id:"lunch",label:"Lunch",icon:"salad"},
+  {id:"dinner",label:"Dinner",icon:"utensils"},
+  {id:"dessert",label:"Dessert",icon:"cookie"},
+  {id:"side",label:"Sides",icon:"soup"},
+];
+const DISHES=[
+  {id:"pa-amb-oli",title:"Pa amb Oli",meal:"breakfast",flavor:"savoury",blurb:"The Mallorcan breakfast that's basically nothing — and everything.",minutes:10,level:"Easy",tag:"Foundations",base:2,hue:["#C8431F","#E8552D"],nutrition:{kcal:210,fat:9,carbs:27,protein:5},
+   technique:{title:"Salt the tomato, not the bread",body:"Salt pulls water out of the tomato so the pulp turns juicy and soaks in — instead of running straight off dry bread. Season the cut face and wait 30 seconds."},
+   ingredients:[{qty:2,unit:"slices",name:"country bread"},{qty:1,unit:"",name:"very ripe tomato"},{qty:1,unit:"clove",name:"garlic"},{qty:2,unit:"tbsp",name:"good olive oil"},{qty:null,unit:"",name:"flaky salt, to finish"}],
+   steps:[{text:"Toast the bread until crisp at the edges but still chewy in the middle.",timer:0},{text:"Halve a garlic clove and rub the cut face hard across the warm toast.",timer:0},{text:"Halve the tomato, season the cut faces with salt, let them sit 30 seconds.",timer:30},{text:"Rub the tomato over the bread so the pulp soaks in, leaving the skin behind.",timer:0},{text:"Drizzle generously with olive oil and finish with flaky salt. Eat now.",timer:0}]},
+  {id:"garlic-confit",title:"Garlic Confit",meal:"side",flavor:"savoury",blurb:"Sweet, spreadable garlic and the best oil you'll ever cook with.",minutes:45,level:"Easy",tag:"Foundations",base:1,hue:["#5C6B45","#3C4A2C"],nutrition:{kcal:120,fat:13,carbs:2,protein:1},
+   technique:{title:"Keep the oil barely trembling",body:"Hold it under ~90°C — just the odd lazy bubble. Let it boil and the garlic scorches bitter. Whisper-low for 40 minutes and it goes gold, soft and sweet."},
+   ingredients:[{qty:2,unit:"heads",name:"garlic, peeled"},{qty:250,unit:"ml",name:"olive oil"},{qty:2,unit:"sprigs",name:"thyme"},{qty:1,unit:"",name:"bay leaf"}],
+   steps:[{text:"Drop the peeled cloves into a small pot in a single layer.",timer:0},{text:"Pour over enough oil to just cover, then add the thyme and bay.",timer:0},{text:"Set the lowest heat — one lazy bubble every few seconds, never a boil.",timer:0},{text:"Cook gently until the cloves are gold and collapse under a spoon.",timer:2400},{text:"Cool, then store cloves and oil in a clean jar in the fridge.",timer:0}]},
+  {id:"jammy-eggs",title:"Jammy Eggs",meal:"breakfast",flavor:"savoury",blurb:"Set white, molten orange centre. Down to the second.",minutes:12,level:"Easy",tag:"Technique",base:4,hue:["#E8552D","#E89B2D"],nutrition:{kcal:72,fat:5,carbs:0,protein:6},
+   technique:{title:"6½ minutes, then ice — every time",body:"Start the clock the moment the eggs hit boiling water. At 6:30 the yolk is set-but-flowing. The ice bath halts the cook instantly so it doesn't keep firming up."},
+   ingredients:[{qty:4,unit:"",name:"eggs, fridge-cold"},{qty:null,unit:"",name:"water"},{qty:null,unit:"",name:"ice, for the bath"}],
+   steps:[{text:"Bring water to a rolling boil and set up a bowl of ice water beside it.",timer:0},{text:"Lower the cold eggs in gently with a spoon. Start the timer.",timer:0},{text:"Boil for exactly 6 minutes 30 seconds at a steady simmer.",timer:390},{text:"Scoop into the ice bath and leave 2 minutes before peeling.",timer:120}]},
+  {id:"sofrito",title:"Sofrito",meal:"side",flavor:"savoury",blurb:"The slow-cooked base that quietly carries half of Spanish cooking.",minutes:30,level:"Easy",tag:"Foundations",base:1,hue:["#3C4A2C","#56542F"],nutrition:{kcal:90,fat:7,carbs:6,protein:1},
+   technique:{title:"// the base layer — don't rush the build",body:"Cook the onions low and slow until jammy and deep gold, a full 20 minutes. This is the flavour every dish on top of it inherits. Skip it and everything tastes thin."},
+   ingredients:[{qty:2,unit:"",name:"onions, finely diced"},{qty:4,unit:"",name:"ripe tomatoes, grated"},{qty:3,unit:"cloves",name:"garlic, minced"},{qty:4,unit:"tbsp",name:"olive oil"},{qty:null,unit:"",name:"salt"}],
+   steps:[{text:"Warm the oil over low heat and add the onions with a pinch of salt.",timer:0},{text:"Cook low and slow, stirring now and then, until jammy and deep gold.",timer:1200},{text:"Add the garlic and cook one minute until fragrant.",timer:60},{text:"Add the grated tomato and cook down until darkened and no liquid pools.",timer:600},{text:"Taste, season, and use as the base for rice, stews or beans.",timer:0}]},
+  {id:"crispy-thighs",title:"Crispy Chicken Thighs",meal:"dinner",flavor:"savoury",blurb:"Skin that shatters like glass. One pan, almost no effort.",minutes:35,level:"Medium",tag:"Technique",base:4,hue:["#C8431F","#8A3A1A"],nutrition:{kcal:280,fat:20,carbs:0,protein:24},
+   technique:{title:"Start skin-side down in a COLD pan",body:"As the pan heats slowly, fat renders out of the skin and crisps it. Drop it into an already-hot pan and the skin seizes and steams instead. Cold start, glass skin."},
+   ingredients:[{qty:4,unit:"",name:"bone-in chicken thighs"},{qty:null,unit:"",name:"salt"},{qty:1,unit:"tbsp",name:"neutral oil"}],
+   steps:[{text:"Pat the thighs bone-dry and salt the skin well. Rest uncovered 20 min if you can.",timer:0},{text:"Lay them skin-side down in a cold, lightly oiled pan, then set medium-low heat.",timer:0},{text:"Let them render undisturbed until the skin is deep gold and releases on its own.",timer:720},{text:"Flip and finish on the second side until cooked through.",timer:360},{text:"Rest 5 minutes before serving so the juices settle.",timer:300}]},
+  {id:"aioli",title:"2-Minute Aioli",meal:"side",flavor:"savoury",blurb:"The emulsion that scares people, made boringly reliable.",minutes:8,level:"Medium",tag:"Technique",base:4,hue:["#A7B088","#5C6B45"],nutrition:{kcal:110,fat:12,carbs:1,protein:1},
+   technique:{title:"First the drops, then the pour",body:"You're forcing oil and egg to hold hands. Add oil one drop at a time until it thickens and grabs — then you can stream it. Go fast at the start and it splits."},
+   ingredients:[{qty:1,unit:"",name:"egg yolk, room temp"},{qty:1,unit:"clove",name:"garlic, crushed to paste"},{qty:150,unit:"ml",name:"neutral oil"},{qty:1,unit:"tsp",name:"lemon juice"},{qty:null,unit:"",name:"salt"}],
+   steps:[{text:"Whisk the yolk, garlic paste, lemon and a pinch of salt in a steady bowl.",timer:0},{text:"Add oil one drop at a time, whisking hard, until it thickens and holds.",timer:0},{text:"Once thick, stream the rest of the oil in slowly while whisking.",timer:0},{text:"Taste and adjust. Loosen with a drop of water if too stiff.",timer:0}]},
+  {id:"crema-catalana",title:"Crema Catalana",meal:"dessert",flavor:"sweet",blurb:"Silky citrus custard under a sheet of cracking caramel.",minutes:40,level:"Medium",tag:"Technique",base:4,hue:["#E89B2D","#E8552D"],nutrition:{kcal:240,fat:12,carbs:26,protein:5},
+   technique:{title:"Temper the eggs — don't scramble them",body:"Whisk a little hot milk into the yolks first to warm them gently, then combine. Dump cold yolks straight into hot milk and you get sweet scrambled eggs."},
+   ingredients:[{qty:500,unit:"ml",name:"whole milk"},{qty:4,unit:"",name:"egg yolks"},{qty:100,unit:"g",name:"sugar, plus more to torch"},{qty:1,unit:"",name:"cinnamon stick"},{qty:1,unit:"",name:"lemon, zest peeled"},{qty:20,unit:"g",name:"cornflour"}],
+   steps:[{text:"Warm the milk with the cinnamon and lemon zest, then leave to infuse off heat.",timer:600},{text:"Whisk the yolks, sugar and cornflour until pale and smooth.",timer:0},{text:"Temper: whisk a ladle of warm milk into the yolks, then pour it all back.",timer:0},{text:"Cook gently, stirring, until thick enough to coat a spoon.",timer:300},{text:"Pour into dishes and chill until set.",timer:0},{text:"Dust with sugar and torch or grill until the top cracks.",timer:0}]},
+  {id:"trampo",title:"Trampó",meal:"lunch",flavor:"savoury",blurb:"The crunchy Mallorcan summer salad — tomato, pepper, onion, oil.",minutes:25,level:"Easy",tag:"Foundations",base:4,hue:["#5C6B45","#A7B088"],nutrition:{kcal:95,fat:7,carbs:8,protein:2},
+   technique:{title:"Salt, rest, then drain off the water",body:"Salt the tomatoes and peppers and let them sit 15 minutes — they weep liquid that would otherwise dilute the oil. Drain it before you dress."},
+   ingredients:[{qty:3,unit:"",name:"ripe tomatoes, chunked"},{qty:1,unit:"",name:"green pepper, chunked"},{qty:1,unit:"",name:"sweet onion, sliced"},{qty:3,unit:"tbsp",name:"olive oil"},{qty:null,unit:"",name:"salt"}],
+   steps:[{text:"Chop everything into rough, chunky pieces — this salad is rustic.",timer:0},{text:"Salt the tomatoes and pepper and let them sit.",timer:900},{text:"Drain off the water they've released.",timer:0},{text:"Dress with olive oil, toss, and rest 10 minutes before serving.",timer:600}]},
+  {id:"olive-oil-pancakes",title:"Olive Oil Pancakes",meal:"breakfast",flavor:"sweet",blurb:"Tender, fluffy stacks with a secret: don't mix them smooth.",minutes:20,level:"Easy",tag:"Technique",base:4,hue:["#E89B2D","#C8431F"],nutrition:{kcal:190,fat:6,carbs:28,protein:6},
+   technique:{title:"Stop mixing while it's still lumpy",body:"Overmixing builds gluten and turns pancakes rubbery. A few dry streaks left in the batter cook out fine and keep them tender and tall."},
+   ingredients:[{qty:150,unit:"g",name:"flour"},{qty:1,unit:"",name:"egg"},{qty:200,unit:"ml",name:"milk"},{qty:1,unit:"tbsp",name:"sugar"},{qty:1,unit:"tsp",name:"baking powder"},{qty:2,unit:"tbsp",name:"olive oil"}],
+   steps:[{text:"Whisk the flour, sugar and baking powder in one bowl.",timer:0},{text:"Whisk the egg, milk and oil in another.",timer:0},{text:"Fold wet into dry until just combined — leave it lumpy.",timer:0},{text:"Rest the batter 5 minutes.",timer:300},{text:"Cook on medium until bubbles form, then flip.",timer:0}]},
+];
+const FEATURED_ID="pa-amb-oli";
+
+/* ------------------------------ STATE ------------------------------- */
+const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
+let T={id:null,total:0,left:0,running:false,done:false};
+
+/* ----------------------------- HELPERS ------------------------------ */
+const ICONS={
+flame:`<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>`,
+clock:`<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+bookmark:`<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>`,
+home:`<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+user:`<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+search:`<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>`,
+x:`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`,
+check:`<path d="M20 6 9 17l-5-5"/>`,
+plus:`<path d="M5 12h14"/><path d="M12 5v14"/>`,
+minus:`<path d="M5 12h14"/>`,
+play:`<polygon points="6 3 20 12 6 21 6 3"/>`,
+pause:`<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`,
+"chevron-left":`<path d="m15 18-6-6 6-6"/>`,
+"arrow-left":`<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>`,
+"arrow-right":`<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>`,
+heart:`<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>`,
+camera:`<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>`,
+lock:`<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`,
+crown:`<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/>`,
+zap:`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+sparkles:`<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>`,
+"rotate-ccw":`<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>`,
+download:`<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>`,
+instagram:`<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>`,
+youtube:`<path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17z"/><polygon points="10 15 15 12 10 9 10 15"/>`,
+coffee:`<path d="M10 2v2"/><path d="M14 2v2"/><path d="M6 2v2"/><path d="M4 8h14v9a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M18 8a3 3 0 0 1 0 6h-1"/>`,
+salad:`<path d="M7 21h10"/><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7"/><path d="m13 12 4-4"/>`,
+utensils:`<path d="M3 2v7c0 1.1.9 2 2 2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>`,
+cookie:`<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5h.01"/><path d="M16 15.5h.01"/><path d="M12 12h.01"/><path d="M11 17h.01"/><path d="M7 14h.01"/>`,
+soup:`<path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/><path d="M8 7c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02"/><path d="M13 7c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02"/>`,
+};
+const ic=(n,o={})=>{const s=o.s||18;return `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${o.f||'none'}" stroke="currentColor" stroke-width="${o.sw||2}" stroke-linecap="round" stroke-linejoin="round"${o.c?` style="color:${o.c}"`:''}>${ICONS[n]||''}</svg>`;};
+const scaleQty=(q,b,sv)=>q==null?null:Math.round(((q*sv)/b)*100)/100;
+const fmt=(s)=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const D=(id)=>DISHES.find(d=>d.id===id);
+function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type="sine";o.frequency.value=880;g.gain.setValueAtTime(.001,c.currentTime);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.5);o.start();o.stop(c.currentTime+.5);}catch(e){}}
+
+const cover=(d,h,r,fs)=>`<div style="position:relative;height:${h}px;border-radius:${r}px;overflow:hidden;background:linear-gradient(135deg,${d.hue[0]},${d.hue[1]});display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
+  <div style="position:absolute;inset:0;opacity:.5;background-image:radial-gradient(circle at 20% 15%,rgba(255,255,255,.25),transparent 45%);"></div>
+  <div style="position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.92);background:rgba(0,0,0,.22);padding:4px 9px;border-radius:100px;">${d.tag}</div>
+  <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.25);">${d.title}</div>
+</div>`;
+const meta=(d)=>`<div class="meta"><span class="i">${ic("clock",{s:13,sw:2.4})} ${d.minutes} min</span><span style="opacity:.4">·</span><span class="i">${ic("flame",{s:13,sw:2.4})} ${d.level}</span></div>`;
+
+/* ----------------------------- SCREENS ------------------------------ */
+function screenHTML(){
+  if(S.openId) return detailHTML(D(S.openId));
+  if(S.tab==="home") return homeHTML();
+  if(S.tab==="search") return searchHTML();
+  if(S.tab==="saved") return savedHTML();
+  if(S.tab==="about") return aboutHTML();
+}
+
+function miniCard(d,w){return `<div class="lift" onclick="openDish('${d.id}')" style="width:${w};flex:0 0 ${w};">
+  ${cover(d,110,16,17)}
+  <div style="margin-top:8px;"><div class="display" style="font-weight:700;font-size:15px;color:var(--ink);line-height:1.1;">${d.title}</div>
+  <div class="mono" style="font-size:11px;color:var(--inkSoft);margin-top:3px;">${d.minutes} min · ${d.level}</div></div></div>`;}
+
+function bigCard(d){const sv=S.saved.has(d.id);return `<div class="card lift" onclick="openDish('${d.id}')">
+  <div style="position:relative;">${cover(d,172,0,26)}
+    <button class="press" onclick="event.stopPropagation();toggleSave('${d.id}')" aria-label="Save" style="position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:100px;border:none;display:grid;place-items:center;background:${sv?"var(--flame)":"rgba(255,255,255,.92)"};color:${sv?"#fff":"var(--ink)"};box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("bookmark",{s:17,sw:2.4,f:sv?"#fff":"none"})}</button>
+  </div>
+  <div style="padding:14px 16px 16px;">${meta(d)}<div style="font-size:14.5px;line-height:1.4;margin-top:8px;font-weight:500;">${d.blurb}</div></div></div>`;}
+
+function homeHTML(){
+  const f=D(FEATURED_ID);
+  return `<div>
+    <div style="background:var(--olive);padding:26px 20px 28px;color:#fff;">
+      <div class="up" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><span class="eyebrow" style="color:var(--sage)">${HANDLE}</span>
+          <div class="display" style="font-weight:800;font-size:40px;letter-spacing:-1.3px;line-height:1;margin-top:6px;">${BRAND}</div>
+          <div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:5px;">${TAGLINE}</div></div>
+        ${S.pro?`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`:`<div style="width:44px;height:44px;border-radius:100px;background:var(--flame);display:grid;place-items:center;">${ic("flame",{s:22,f:"#fff",c:"#fff"})}</div>`}
+      </div>
+    </div>
+    <div style="padding:22px 20px 0;">
+      <span class="eyebrow">Dish of the week</span>
+      <div class="lift up" onclick="openDish('${f.id}')" style="margin-top:12px;border-radius:22px;overflow:hidden;position:relative;">
+        ${cover(f,240,0,36)}
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.4),transparent 55%);"></div>
+        <div style="position:absolute;bottom:16px;right:16px;display:inline-flex;align-items:center;gap:8px;background:var(--flame);color:#fff;padding:10px 16px;border-radius:100px;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1px;">COOK THIS ${ic("arrow-right",{s:15})}</div>
+      </div>
+
+      <div style="margin-top:26px;"><span class="eyebrow">Browse by meal</span></div>
+      <div class="scrollx" style="display:flex;gap:10px;margin-top:12px;padding-bottom:4px;">
+        ${MEALS.map(m=>`<button class="press" onclick="goCategory('${m.id}')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px;width:78px;padding:14px 6px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--olive);">${ic(m.icon,{s:22,sw:2})}<span class="mono" style="font-size:10.5px;font-weight:700;color:var(--ink);">${m.label}</span></button>`).join("")}
+      </div>
+
+      <div class="lift" onclick="openScan()" style="margin-top:26px;border-radius:20px;padding:20px;background:linear-gradient(135deg,#2C361F,#3C4A2C);color:#fff;display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(232,85,45,.2);display:grid;place-items:center;flex:0 0 52px;">${ic("camera",{s:24,c:"var(--flame)"})}</div>
+        <div style="flex:1;"><div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="display" style="font-weight:700;font-size:17px;">Scan your fridge</span>${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</div>
+        <div style="font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.4;">Get dishes from what you've already got in.</div></div>
+        ${ic("arrow-right",{s:20,c:"rgba(255,255,255,.6)"})}
+      </div>
+
+      ${S.pro?"":`<div class="lift" onclick="goPro()" style="margin-top:14px;border-radius:20px;padding:18px 20px;background:var(--flame);color:#fff;display:flex;align-items:center;gap:14px;">${ic("crown",{s:26})}<div style="flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Unlock MISE Pro</div><div style="font-size:13.5px;color:rgba(255,255,255,.85);">Nutrition, macros & fridge scan — ${PRO_PRICE}/mo</div></div>${ic("arrow-right",{s:20})}</div>`}
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px;margin-bottom:12px;">
+        <span class="eyebrow">Fresh from the kitchen</span>
+        <button onclick="setTab('search')" style="background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--flame);letter-spacing:1px;">SEE ALL</button>
+      </div>
+      <div class="scrollx" style="display:flex;gap:14px;padding-bottom:24px;">${DISHES.slice(0,5).map(d=>miniCard(d,"150px")).join("")}</div>
+    </div>
+  </div>`;
+}
+
+function searchHTML(){
+  return `<div>
+    <div style="background:var(--olive);padding:26px 20px 20px;color:#fff;">
+      <span class="eyebrow" style="color:var(--sage)">Browse</span>
+      <h2 class="display" style="font-weight:800;font-size:30px;letter-spacing:-.8px;margin:6px 0 16px;">Find a dish</h2>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:14px;padding:0 14px;">
+        ${ic("search",{s:18,c:"rgba(255,255,255,.7)"})}
+        <input id="searchInput" oninput="onSearch(this.value)" value="${S.query.replace(/"/g,"&quot;")}" placeholder="Search dishes, techniques…" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15.5px;padding:14px 0;" />
+        ${S.query?`<button onclick="clearSearch()" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);display:grid;place-items:center;">${ic("x",{s:16})}</button>`:""}
+      </div>
+    </div>
+    <div style="padding:18px 20px 0;">
+      <div class="scrollx" style="display:flex;gap:8px;padding-bottom:12px;">
+        <button class="chip ${S.meal==="all"?"active":""}" onclick="setMeal('all')">All</button>
+        ${MEALS.map(m=>`<button class="chip ${S.meal===m.id?"active":""}" onclick="setMeal('${m.id}')">${m.label}</button>`).join("")}
+      </div>
+      <div class="scrollx" style="display:flex;gap:8px;padding-bottom:16px;">
+        <button class="chip ${S.flavor==="all"?"active":""}" onclick="setFlavor('all')">Any</button>
+        <button class="chip ${S.flavor==="savoury"?"active":""}" onclick="setFlavor('savoury')">Savoury</button>
+        <button class="chip ${S.flavor==="sweet"?"active":""}" onclick="setFlavor('sweet')">Sweet</button>
+      </div>
+    </div>
+    <div style="padding:0 20px 24px;" id="results">${resultsHTML()}</div>
+  </div>`;
+}
+function getResults(){const q=S.query.trim().toLowerCase();return DISHES.filter(d=>{const mq=!q||d.title.toLowerCase().includes(q)||d.blurb.toLowerCase().includes(q)||d.tag.toLowerCase().includes(q);return mq&&(S.meal==="all"||d.meal===S.meal)&&(S.flavor==="all"||d.flavor===S.flavor);});}
+function resultsHTML(){
+  const r=getResults();
+  let out=`<div class="mono" style="font-size:11px;color:var(--inkSoft);margin-bottom:14px;letter-spacing:1px;">${r.length} ${r.length===1?"DISH":"DISHES"}</div>`;
+  if(r.length===0) return out+`<div class="up" style="text-align:center;padding:30px 20px;"><div class="display" style="font-weight:700;font-size:19px;">Nothing here yet</div><div style="font-size:14.5px;color:var(--inkSoft);margin-top:6px;">Try a different filter or clear your search.</div></div>`;
+  return out+`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">${r.map(d=>miniCard(d,"100%")).join("")}</div>`;
+}
+
+function savedHTML(){
+  const list=DISHES.filter(d=>S.saved.has(d.id));
+  return `<div style="min-height:70vh;">
+    <div style="padding:30px 20px 18px;"><span class="eyebrow">Your kitchen</span><h2 class="display" style="font-weight:800;font-size:34px;margin:6px 0 0;letter-spacing:-.8px;">Saved</h2></div>
+    ${list.length===0?`<div class="up" style="padding:40px 30px;text-align:center;"><div style="width:72px;height:72px;border-radius:100px;background:var(--cream);display:grid;place-items:center;margin:0 auto 18px;">${ic("bookmark",{s:30,c:"var(--olive)",sw:2})}</div><div class="display" style="font-weight:700;font-size:20px;">Nothing saved yet</div><div style="font-size:15px;color:var(--inkSoft);margin-top:8px;line-height:1.5;max-width:260px;margin-left:auto;margin-right:auto;">Tap the bookmark on any dish to keep it here for when you're ready to cook.</div></div>`:`<div style="display:flex;flex-direction:column;gap:18px;padding:0 20px 24px;">${list.map(d=>bigCard(d)).join("")}</div>`}
+  </div>`;
+}
+
+function aboutHTML(){
+  const link=(i,l)=>`<button class="press" style="flex:1;padding:14px 0;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink);">${ic(i,{s:22,sw:2})}<span class="mono" style="font-size:11px;font-weight:700;letter-spacing:1px;">${l}</span></button>`;
+  return `<div>
+    <div style="background:var(--olive);padding:34px 20px 30px;color:#fff;">
+      <span class="eyebrow" style="color:var(--sage)">About</span>
+      <h2 class="display up" style="font-weight:800;font-size:32px;margin:8px 0 0;letter-spacing:-.8px;line-height:1.05;">Learning to cook,<br/>out loud.</h2>
+      <p class="up" style="font-size:15.5px;line-height:1.55;color:rgba(255,255,255,.85);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
+    </div>
+    <div style="padding:24px 20px;">
+      <div style="background:var(--oliveDeep);border-radius:18px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div><span class="eyebrow" style="color:var(--sage)">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:#fff;line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
+        ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
+      </div>
+      ${S.pro?`<div style="background:var(--sage);border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;color:var(--oliveDeep);">${ic("crown",{s:22})}<div class="display" style="font-weight:700;font-size:16px;">You're a Pro member</div></div>`:`<button onclick="goPro()" class="press" style="width:100%;border:none;cursor:pointer;background:var(--flame);color:#fff;border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;">${ic("crown",{s:22})}<div style="text-align:left;flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Go Pro</div><div style="font-size:13px;color:rgba(255,255,255,.85);">Nutrition & fridge scan · ${PRO_PRICE}/mo</div></div>${ic("arrow-right",{s:20})}</button>`}
+      <span class="eyebrow" style="color:var(--olive)">Cook along with me</span>
+      <div style="display:flex;gap:12px;margin-top:12px;">${link("instagram","INSTAGRAM")}${link("youtube","YOUTUBE")}${link("heart","FOLLOW")}</div>
+      <div style="text-align:center;margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--inkSoft);letter-spacing:1px;">${BRAND} · ${TAGLINE.toUpperCase()}</div>
+    </div>
+  </div>`;
+}
+
+function detailHTML(d){
+  const sv=S.saved.has(d.id), ck=S.cooked.has(d.id), serv=S.servings||d.base;
+  const tiles=[["kcal",d.nutrition.kcal,""],["fat",d.nutrition.fat,"g"],["carbs",d.nutrition.carbs,"g"],["protein",d.nutrition.protein,"g"]];
+  return `<div class="up" style="padding-bottom:120px;">
+    <div style="position:relative;">${cover(d,290,0,40)}
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),transparent 50%);"></div>
+      <button class="press" onclick="back()" style="position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:100px;border:none;background:rgba(255,255,255,.92);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2);">${ic("chevron-left",{s:20})}</button>
+      <button class="press" onclick="toggleSave('${d.id}')" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:100px;border:none;background:${sv?"var(--flame)":"rgba(255,255,255,.92)"};color:${sv?"#fff":"var(--ink)"};display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2);">${ic("bookmark",{s:18,sw:2.4,f:sv?"#fff":"none"})}</button>
+    </div>
+    <div style="padding:22px 20px 0;">
+      ${meta(d)}
+      <p style="font-size:16px;line-height:1.5;margin:12px 0 22px;font-weight:500;">${d.blurb}</p>
+      <div class="lift" onclick="appToast()" style="position:relative;height:180px;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,${d.hue[1]},${d.hue[0]});margin-bottom:24px;display:grid;place-items:center;">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.18);"></div>
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;color:#fff;"><div style="width:58px;height:58px;border-radius:100px;background:rgba(255,255,255,.95);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);">${ic("play",{s:24,f:"var(--ink)",c:"var(--ink)"})}</div><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:1px;">WATCH THE 60-SEC VERSION</span></div>
+      </div>
+
+      <div class="pop" style="background:var(--oliveDeep);color:var(--cream);border-radius:18px;padding:18px 18px 20px;border-left:4px solid var(--flame);margin-bottom:26px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">${ic("flame",{s:15,c:"var(--flame)",sw:2.6})}<span class="eyebrow" style="color:var(--sage)">The technique</span></div>
+        <div class="display" style="font-weight:700;font-size:19px;line-height:1.15;color:#fff;margin-bottom:8px;">${d.technique.title}</div>
+        <div style="font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.82);">${d.technique.body}</div>
+      </div>
+
+      <div style="position:relative;margin-bottom:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px;">Nutrition ${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</h3>
+          <span class="mono" style="font-size:10px;color:var(--inkSoft);">PER SERVING · EST.</span>
+        </div>
+        <div style="display:flex;gap:10px;${S.pro?"":"filter:blur(6px);pointer-events:none;user-select:none;"}">
+          ${tiles.map(t=>`<div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 8px;text-align:center;"><div class="mono" style="font-weight:700;font-size:20px;color:var(--olive);">${t[1]}${t[2]}</div><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;margin-top:4px;">${t[0]}</div></div>`).join("")}
+        </div>
+        ${S.pro?"":`<button class="press" onclick="goPro()" style="position:absolute;inset:0;top:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;cursor:pointer;"><div style="width:42px;height:42px;border-radius:100px;background:var(--oliveDeep);display:grid;place-items:center;">${ic("lock",{s:18,c:"var(--sage)"})}</div><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);">UNLOCK WITH PRO</span></button>`}
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;">Ingredients</h3>
+        <div style="display:flex;align-items:center;gap:12px;"><span class="eyebrow" style="color:var(--olive)">Serves</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="press" onclick="setServings(${serv-1})" aria-label="Fewer" style="width:34px;height:34px;border-radius:100px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);">${ic("minus",{s:15})}</button>
+            <span class="mono" style="font-weight:700;font-size:17px;min-width:22px;text-align:center;">${serv}</span>
+            <button class="press" onclick="setServings(${serv+1})" aria-label="More" style="width:34px;height:34px;border-radius:100px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);">${ic("plus",{s:15})}</button>
+          </div></div>
+      </div>
+      <div class="card" style="border-radius:18px;margin-bottom:28px;">
+        ${d.ingredients.map((g,i)=>{const q=scaleQty(g.qty,d.base,serv);return `<div style="display:flex;align-items:baseline;gap:12px;padding:13px 16px;${i<d.ingredients.length-1?"border-bottom:1px solid var(--line);":""}"><span class="mono" style="font-weight:700;font-size:14px;color:var(--flame);min-width:64px;">${q!=null?q+(g.unit?" "+g.unit:""):"—"}</span><span style="font-size:15px;font-weight:500;">${g.name}</span></div>`;}).join("")}
+      </div>
+
+      <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;margin-bottom:14px;">Method</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        ${d.steps.map((s,i)=>`<div style="display:flex;gap:14px;"><span class="mono" style="font-weight:700;font-size:13px;color:var(--sage);min-width:26px;padding-top:2px;">${String(i+1).padStart(2,"0")}</span><span style="font-size:15px;line-height:1.5;">${s.text}${s.timer>0?` <span class="mono" style="font-size:11px;font-weight:700;color:var(--flame);margin-left:8px;background:rgba(232,85,45,.1);padding:2px 7px;border-radius:100px;white-space:nowrap;">⏱ ${fmt(s.timer)}</span>`:""}</span></div>`).join("")}
+      </div>
+    </div>
+    <div style="position:fixed;bottom:78px;left:0;right:0;padding:12px 20px;display:flex;gap:12px;max-width:480px;margin:0 auto;">
+      <button class="press" onclick="markCooked('${d.id}')" aria-label="Cooked" style="flex:0 0 56px;height:56px;border-radius:16px;cursor:pointer;border:1px solid ${ck?"var(--sage)":"var(--line)"};background:${ck?"var(--sage)":"var(--card)"};color:${ck?"var(--oliveDeep)":"var(--ink)"};display:grid;place-items:center;">${ic("check",{s:22,sw:3})}</button>
+      <button class="btn-flame press" onclick="startCook('${d.id}')">${ic("flame",{s:19,f:"#fff"})} START COOKING</button>
+    </div>
+  </div>`;
+}
+
+/* ----------------------------- OVERLAYS ----------------------------- */
+function overlayHTML(){
+  let h="";
+  if(S.cooking) h+=cookHTML(D(S.cooking));
+  if(S.showScan) h+=scanHTML();
+  if(S.showPro) h+=proHTML();
+  return h;
+}
+function cookHTML(d){
+  const i=S.cookStep, step=d.steps[i], last=i===d.steps.length-1;
+  return `<div style="position:fixed;inset:0;background:var(--oliveDeep);z-index:60;display:flex;flex-direction:column;color:#fff;">
+    <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <button class="press" onclick="exitCook()" style="background:rgba(255,255,255,.12);border:none;color:#fff;padding:8px 14px;border-radius:100px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;">${ic("chevron-left",{s:15})} EXIT</button>
+      <span class="mono" style="font-size:13px;font-weight:700;letter-spacing:1px;color:var(--sage);">STEP ${String(i+1).padStart(2,"0")} / ${String(d.steps.length).padStart(2,"0")}</span>
+    </div>
+    <div style="height:4px;background:rgba(255,255,255,.12);margin:0 20px;border-radius:100px;overflow:hidden;"><div style="height:100%;width:${((i+1)/d.steps.length)*100}%;background:var(--flame);transition:width .35s;"></div></div>
+    <div class="pop" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 28px;gap:30px;">
+      <div class="display" style="font-weight:600;font-size:30px;line-height:1.18;letter-spacing:-.4px;">${step.text}</div>
+      ${step.timer>0?timerHTML():""}
+    </div>
+    <div style="padding:18px 20px 30px;display:flex;gap:12px;">
+      <button class="press" onclick="cookPrev()" ${i===0?"disabled":""} style="flex:0 0 56px;height:56px;border-radius:16px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;cursor:${i===0?"default":"pointer"};opacity:${i===0?.35:1};display:grid;place-items:center;">${ic("arrow-left",{s:20})}</button>
+      <button class="press" onclick="${last?"exitCook()":"cookNext()"}" style="flex:1;height:56px;border-radius:16px;border:none;cursor:pointer;background:${last?"var(--sage)":"var(--flame)"};color:${last?"var(--oliveDeep)":"#fff"};font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;gap:10px;">${last?`${ic("check",{s:19,sw:3})} FINISH`:`NEXT STEP ${ic("arrow-right",{s:19})}`}</button>
+    </div>
+  </div>`;
+}
+function timerHTML(){
+  const R=52,CIRC=2*Math.PI*R;
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+    <div style="position:relative;width:140px;height:140px;">
+      <svg width="140" height="140" style="transform:rotate(-90deg);"><circle cx="70" cy="70" r="${R}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="8"></circle><circle id="t-ring" cx="70" cy="70" r="${R}" fill="none" stroke="var(--flame)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear;"></circle></svg>
+      <div id="t-digits" style="position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:30px;color:#fff;"></div>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button id="t-btn" class="press" onclick="toggleTimer()" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:100px;border:none;cursor:pointer;background:var(--flame);color:#fff;font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:1px;"></button>
+      <button class="press" onclick="resetTimer()" style="width:44px;border-radius:100px;border:1px solid rgba(255,255,255,.25);cursor:pointer;background:transparent;color:#fff;display:grid;place-items:center;">${ic("rotate-ccw",{s:16})}</button>
+    </div>
+  </div>`;
+}
+function scanHTML(){
+  let body="";
+  if(S.scanPhase==="intro"){
+    body=`<div class="up" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:24px;">
+      <div style="width:100%;height:230px;border-radius:20px;background:linear-gradient(160deg,#3C4A2C,#2C361F);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:24px;"><div style="width:150px;height:150px;border:2px dashed rgba(255,255,255,.35);border-radius:18px;"></div><div style="position:absolute;">${ic("camera",{s:40,c:"rgba(255,255,255,.6)"})}</div></div>
+      <h2 class="display" style="font-weight:800;font-size:26px;letter-spacing:-.5px;">What's in your fridge?</h2>
+      <p style="font-size:15px;color:var(--inkSoft);line-height:1.5;margin:10px 0 24px;max-width:300px;">Point your camera at the shelf. MISE spots the ingredients and suggests what you can cook right now.</p>
+      <button class="btn-flame press" onclick="scanGo()">${ic("camera",{s:19})} START SCAN</button>
+    </div>`;
+  } else if(S.scanPhase==="scanning"){
+    const em=["🍅","🧄","🥚","🍞","🫒","🧅"];
+    body=`<div style="padding-top:24px;"><div style="width:100%;height:280px;border-radius:20px;background:linear-gradient(160deg,#3C4A2C,#2C361F);position:relative;overflow:hidden;">
+      <div style="position:absolute;left:6%;right:6%;height:3px;background:var(--flame);box-shadow:0 0 16px var(--flame);border-radius:100px;animation:scanline 1.4s ease-in-out infinite alternate;"></div>
+      ${em.map((e,i)=>`<span style="position:absolute;font-size:26px;opacity:.85;left:${15+(i%3)*30}%;top:${20+Math.floor(i/3)*42}%;animation:pulse 1.2s infinite;animation-delay:${i*120}ms;">${e}</span>`).join("")}
+    </div><div class="mono" style="text-align:center;margin-top:22px;font-size:13px;font-weight:700;letter-spacing:1px;color:var(--olive);animation:pulse 1.2s infinite;">SCANNING…</div></div>`;
+  } else {
+    const active=Object.keys(S.found).filter(k=>S.found[k]);
+    const matches=DISHES.map(d=>{const names=d.ingredients.map(i=>i.name.toLowerCase());return {d,count:active.filter(k=>names.some(n=>n.includes(k))).length};}).filter(m=>m.count>0).sort((a,b)=>b.count-a.count);
+    body=`<div class="up"><span class="eyebrow" style="color:var(--olive)">Spotted in your fridge</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 26px;">${Object.keys(S.found).map(k=>`<button class="press" onclick="toggleFound('${k}')" style="font-weight:600;font-size:13.5px;padding:8px 14px;border-radius:100px;cursor:pointer;border:1px solid ${S.found[k]?"var(--olive)":"var(--line)"};background:${S.found[k]?"var(--olive)":"var(--card)"};color:${S.found[k]?"#fff":"var(--inkSoft)"};text-transform:capitalize;display:inline-flex;align-items:center;gap:6px;">${S.found[k]?ic("check",{s:13,sw:3}):""}${k}</button>`).join("")}</div>
+      <h3 class="display" style="font-weight:800;font-size:22px;letter-spacing:-.4px;margin-bottom:14px;">${matches.length} dishes you can make</h3>
+      <div style="display:flex;flex-direction:column;gap:12px;">${matches.map(({d,count})=>`<div class="lift" onclick="openFromScan('${d.id}')" style="display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;align-items:center;"><div style="width:60px;height:60px;border-radius:12px;flex:0 0 60px;background:linear-gradient(135deg,${d.hue[0]},${d.hue[1]});"></div><div style="flex:1;"><div class="display" style="font-weight:700;font-size:16px;">${d.title}</div><div class="mono" style="font-size:11px;color:var(--flame);margin-top:3px;">USES ${count} OF YOUR INGREDIENTS</div></div>${ic("arrow-right",{s:18,c:"var(--inkSoft)"})}</div>`).join("")}</div>
+    </div>`;
+  }
+  return `<div style="position:fixed;inset:0;background:var(--paper);z-index:65;display:flex;flex-direction:column;max-width:480px;margin:0 auto;">
+    <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--oliveDeep);color:#fff;"><div style="display:inline-flex;align-items:center;gap:8px;">${ic("camera",{s:18,c:"var(--sage)"})}<span class="mono" style="font-size:13px;font-weight:700;letter-spacing:1px;">FRIDGE SCAN</span></div><button class="press" onclick="closeScan()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button></div>
+    <div style="flex:1;overflow-y:auto;padding:20px;">${body}</div>
+  </div>`;
+}
+function proHTML(){
+  const perks=[["zap","Calories & macros","Per-serving nutrition on every dish."],["camera","Scan your fridge","Snap what you've got, get dishes you can make now."],["sparkles","Portion scaling","Macros that follow your serving size."]];
+  return `<div onclick="closePro()" style="position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,18,14,.55);">
+    <div class="sheet" onclick="event.stopPropagation()" style="background:var(--oliveDeep);border-radius:26px 26px 0 0;padding:26px 22px 30px;color:#fff;max-width:480px;margin:0 auto;width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="display:inline-flex;align-items:center;gap:8px;">${ic("crown",{s:18,c:"var(--sage)"})}<span class="eyebrow" style="color:var(--sage)">${BRAND} Pro</span></div><button class="press" onclick="closePro()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button></div>
+      <h2 class="display" style="font-weight:800;font-size:28px;letter-spacing:-.6px;line-height:1.05;margin:4px 0 18px;">Cook smarter, not just tastier.</h2>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">${perks.map(p=>`<div style="display:flex;gap:14px;align-items:flex-start;"><div style="width:40px;height:40px;border-radius:12px;background:rgba(167,176,136,.18);display:grid;place-items:center;flex:0 0 40px;">${ic(p[0],{s:19,c:"var(--sage)"})}</div><div><div style="font-weight:700;font-size:15.5px;">${p[1]}</div><div style="font-size:13.5px;color:rgba(255,255,255,.7);line-height:1.4;">${p[2]}</div></div></div>`).join("")}</div>
+      <button class="btn-flame press" onclick="unlockPro()">Go Pro · ${PRO_PRICE}/mo</button>
+      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">DEMO — UNLOCKS INSTANTLY HERE</div>
+    </div>
+  </div>`;
+}
+
+/* ------------------------------- NAV -------------------------------- */
+function navHTML(){
+  const items=[["home","home","HOME"],["search","search","BROWSE"],["saved","bookmark","SAVED"],["about","user","ME"]];
+  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId;return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&id==="saved"?"#fff":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}</button>`;}).join("")}</div>`;
+}
+
+/* ----------------------------- ACTIONS ------------------------------ */
+function render(){
+  document.getElementById("screen").innerHTML=screenHTML();
+  document.getElementById("nav").innerHTML=navHTML();
+  document.getElementById("overlay").innerHTML=overlayHTML();
+  if(S.cooking) mountTimer();
+}
+function nav(){render();window.scrollTo(0,0);}
+function setTab(t){S.openId=null;S.tab=t;nav();}
+function openDish(id){S.openId=id;S.servings=null;nav();}
+function back(){S.openId=null;nav();}
+function toggleSave(id){S.saved.has(id)?S.saved.delete(id):S.saved.add(id);render();}
+function markCooked(id){S.cooked.has(id)?S.cooked.delete(id):S.cooked.add(id);render();}
+function setServings(v){S.servings=Math.max(1,v);render();}
+function goPro(){S.showPro=true;render();}
+function closePro(){S.showPro=false;render();}
+function unlockPro(){S.pro=true;S.showPro=false;render();}
+function openScan(){if(S.pro){S.showScan=true;S.scanPhase="intro";render();}else goPro();}
+function closeScan(){S.showScan=false;render();}
+function scanGo(){S.scanPhase="scanning";render();setTimeout(()=>{S.scanPhase="results";render();},1700);}
+function toggleFound(k){S.found[k]=!S.found[k];render();}
+function openFromScan(id){S.showScan=false;S.openId=id;S.servings=null;nav();}
+function goCategory(m){S.meal=m;S.flavor="all";S.query="";S.tab="search";S.openId=null;nav();}
+function setMeal(m){S.meal=m;render();}
+function setFlavor(f){S.flavor=f;render();}
+function clearSearch(){S.query="";render();}
+function onSearch(v){S.query=v;document.getElementById("results").innerHTML=resultsHTML();}
+function startCook(id){S.cooking=id;S.cookStep=0;render();}
+function exitCook(){clearInterval(T.id);S.cooking=null;render();}
+function cookNext(){clearInterval(T.id);S.cookStep++;render();}
+function cookPrev(){clearInterval(T.id);S.cookStep--;render();}
+
+/* TIMER */
+function mountTimer(){
+  const d=D(S.cooking),step=d.steps[S.cookStep];
+  if(!step||step.timer<=0)return;
+  clearInterval(T.id);T.total=step.timer;T.left=step.timer;T.running=false;T.done=false;
+  paintTimer();
+}
+function paintTimer(){
+  const dg=document.getElementById("t-digits"),ring=document.getElementById("t-ring"),btn=document.getElementById("t-btn");
+  if(!dg)return;
+  const R=52,CIRC=2*Math.PI*R,pct=T.total?T.left/T.total:0;
+  dg.textContent=T.done?"DONE":fmt(T.left);
+  dg.style.color=T.done?"var(--sage)":"#fff";
+  dg.style.animation=T.done?"pulse 1s infinite":"none";
+  ring.setAttribute("stroke",T.done?"var(--sage)":"var(--flame)");
+  ring.setAttribute("stroke-dashoffset",CIRC*(1-pct));
+  btn.innerHTML=T.running?`${ic("pause",{s:15})} PAUSE`:`${ic("play",{s:15,f:"#fff"})} ${T.done?"AGAIN":"START"}`;
+}
+function toggleTimer(){
+  if(T.done){T.left=T.total;T.done=false;}
+  T.running=!T.running;
+  clearInterval(T.id);
+  if(T.running){T.id=setInterval(()=>{T.left--;if(T.left<=0){T.left=0;T.running=false;T.done=true;clearInterval(T.id);beep();try{navigator.vibrate&&navigator.vibrate(400);}catch(e){}}paintTimer();},1000);}
+  paintTimer();
+}
+function resetTimer(){clearInterval(T.id);T.left=T.total;T.running=false;T.done=false;paintTimer();}
+
+/* TOAST */
+let toastT;
+function appToast(){const t=document.getElementById("toast");t.textContent="🚀 Launching soon — follow for the drop";t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
+
+/* MARQUEE build (duplicate for seamless loop) */
+(function(){
+  const msg=`📱 Download the ${BRAND} app — cook along with every video  •  new dish every week  •  ${HANDLE}  •  `;
+  document.getElementById("mq").innerHTML=`<span>${msg}</span><span>${msg}</span>`;
+})();
+
+render();
+</script>
+</body>
+</html>
