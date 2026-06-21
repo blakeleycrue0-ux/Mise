@@ -125,6 +125,16 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 
   .sheen{position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.18) 100%);pointer-events:none;}
+
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .field label{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--inkSoft);font-weight:700;}
+  .field input,.field textarea,.field select{
+    background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:14px;
+    padding:13px 14px;font-size:15px;color:var(--ink);outline:none;font-family:var(--body);width:100%;
+  }
+  .field textarea{resize:vertical;min-height:64px;line-height:1.4;}
+  .ghostbtn{background:rgba(255,255,255,.5);border:1px solid var(--glassBorder);border-radius:14px;padding:11px 16px;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+  .danger{color:#B23A3A;}
 </style>
 </head>
 <body>
@@ -169,6 +179,28 @@ const MEALS=[
   {id:"dessert",label:"Dessert",icon:"cookie"},
   {id:"side",label:"Sides",icon:"soup"},
 ];
+const DIETS=[
+  {id:"all",label:"Everything"},
+  {id:"vegetarian",label:"Vegetarian"},
+  {id:"vegan",label:"Vegan"},
+  {id:"pescatarian",label:"Pescatarian"},
+  {id:"omnivore",label:"No restrictions, I eat it all"},
+];
+/* naive ingredient-based diet matching for the built-in dish list */
+const MEAT_WORDS=["chicken","beef","pork","thigh","bacon","ham","lamb","sausage"];
+const FISH_WORDS=["fish","salmon","tuna","anchov","prawn","shrimp"];
+const ANIMAL_WORDS=["egg","yolk","milk","cheese","butter","cream","honey"];
+function dishDiets(d){
+  const text=d.ingredients.map(i=>i.name.toLowerCase()).join(" ");
+  const hasMeat=MEAT_WORDS.some(w=>text.includes(w));
+  const hasFish=FISH_WORDS.some(w=>text.includes(w));
+  const hasAnimal=ANIMAL_WORDS.some(w=>text.includes(w));
+  const out=["omnivore"];
+  if(!hasMeat&&!hasFish) out.push("vegetarian");
+  if(!hasMeat&&!hasFish&&!hasAnimal) out.push("vegan");
+  if(!hasMeat) out.push("pescatarian");
+  return out;
+}
 const DISHES=[
   {id:"pa-amb-oli",title:"Pa amb Oli",meal:"breakfast",flavor:"savoury",blurb:"The Mallorcan breakfast that's basically nothing — and everything.",minutes:10,level:"Easy",tag:"Foundations",base:2,hue:["#1B3B8C","#3E63B5"],nutrition:{kcal:210,fat:9,carbs:27,protein:5},
    technique:{title:"Salt the tomato, not the bread",body:"Salt pulls water out of the tomato so the pulp turns juicy and soaks in — instead of running straight off dry bread. Season the cut face and wait 30 seconds."},
@@ -210,7 +242,11 @@ const DISHES=[
 const FEATURED_ID="pa-amb-oli";
 
 /* ------------------------------ STATE ------------------------------- */
-const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,authBusy:false,authSent:false,authError:"",userEmail:"",scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
+const S={tab:"home",openId:null,openCustom:null,cooking:null,cookingCustom:false,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,authBusy:false,authSent:false,authError:"",userEmail:"",scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all",diet:"all",
+  onboarding:false,onboardStep:0,onboardDiet:null,
+  customRecipes:[],customLoading:false,
+  showEditor:false,editorId:null,editorDraft:null,editorSaving:false,
+};
 let T={id:null,total:0,left:0,running:false,done:false};
 let supa=null;
 
@@ -247,11 +283,15 @@ salad:`<path d="M7 21h10"/><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><pat
 utensils:`<path d="M3 2v7c0 1.1.9 2 2 2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>`,
 cookie:`<path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5h.01"/><path d="M16 15.5h.01"/><path d="M12 12h.01"/><path d="M11 17h.01"/><path d="M7 14h.01"/>`,
 soup:`<path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/><path d="M8 7c.27.1.8.53.75 1.36-.06.83-.93 1.2-1 2.02"/><path d="M13 7c.27.1.8.53.74 1.36-.05.83-.93 1.2-.98 2.02"/>`,
+edit:`<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>`,
+trash:`<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`,
+chef:`<path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"/><path d="M6 17h12"/>`,
 };
 const ic=(n,o={})=>{const s=o.s||18;return `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${o.f||'none'}" stroke="currentColor" stroke-width="${o.sw||2}" stroke-linecap="round" stroke-linejoin="round"${o.c?` style="color:${o.c}"`:''}>${ICONS[n]||''}</svg>`;};
 const scaleQty=(q,b,sv)=>q==null?null:Math.round(((q*sv)/b)*100)/100;
 const fmt=(s)=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 const D=(id)=>DISHES.find(d=>d.id===id);
+const C=(id)=>S.customRecipes.find(d=>d.id===id);
 function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type="sine";o.frequency.value=880;g.gain.setValueAtTime(.001,c.currentTime);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.5);o.start();o.stop(c.currentTime+.5);}catch(e){}}
 
 function glassLogo(size){
@@ -276,25 +316,40 @@ const cover=(d,h,r,fs)=>{
   <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.4);">${d.title}</div>
 </div>`;
 };
+/* lightweight cover for custom recipes — no AI image, just a gradient + chef icon */
+const coverCustom=(d,h,r,fs)=>`<div style="position:relative;height:${h}px;border-radius:${r}px;overflow:hidden;background:linear-gradient(135deg,${d.hue[0]},${d.hue[1]});display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
+  <div class="sheen"></div>
+  <div style="position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.35);padding:4px 9px;border-radius:100px;display:inline-flex;align-items:center;gap:5px;">${ic("chef",{s:11})} MY RECIPE</div>
+  <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.4);">${d.title}</div>
+</div>`;
 const meta=(d)=>`<div class="meta"><span class="i">${ic("clock",{s:13,sw:2.4})} ${d.minutes} min</span><span style="opacity:.4">·</span><span class="i">${ic("flame",{s:13,sw:2.4})} ${d.level}</span></div>`;
+const dietBadge=(d)=>{
+  if(S.diet==="all"||S.diet==="omnivore") return "";
+  const ds=dishDiets(d);
+  if(!ds.includes(S.diet)) return "";
+  const label=DIETS.find(x=>x.id===S.diet).label;
+  return `<span class="mono" style="font-size:9.5px;font-weight:700;letter-spacing:.5px;color:var(--oliveDeep);background:rgba(167,176,136,.55);padding:2px 7px;border-radius:100px;margin-left:6px;">${label.toUpperCase()}</span>`;
+};
 
 /* ----------------------------- SCREENS ------------------------------ */
 function screenHTML(){
   if(S.openId) return detailHTML(D(S.openId));
+  if(S.openCustom) return detailHTML(C(S.openCustom),true);
   if(S.tab==="home") return homeHTML();
   if(S.tab==="search") return searchHTML();
   if(S.tab==="saved") return savedHTML();
+  if(S.tab==="mine") return mineHTML();
   if(S.tab==="about") return aboutHTML();
 }
 
-function miniCard(d,w){return `<div class="lift" onclick="openDish('${d.id}')" style="width:${w};flex:0 0 ${w};">
-  ${cover(d,110,16,17)}
-  <div style="margin-top:8px;"><div class="display" style="font-weight:700;font-size:15px;color:var(--ink);line-height:1.1;">${d.title}</div>
+function miniCard(d,w,custom){return `<div class="lift" onclick="${custom?`openCustomDish('${d.id}')`:`openDish('${d.id}')`}" style="width:${w};flex:0 0 ${w};">
+  ${custom?coverCustom(d,110,16,17):cover(d,110,16,17)}
+  <div style="margin-top:8px;"><div class="display" style="font-weight:700;font-size:15px;color:var(--ink);line-height:1.1;">${d.title}${dietBadge(d)}</div>
   <div class="mono" style="font-size:11px;color:var(--inkSoft);margin-top:3px;">${d.minutes} min · ${d.level}</div></div></div>`;}
 
-function bigCard(d){const sv=S.saved.has(d.id);return `<div class="card lift" onclick="openDish('${d.id}')">
-  <div style="position:relative;">${cover(d,172,0,26)}
-    <button class="press" onclick="event.stopPropagation();toggleSave('${d.id}')" aria-label="Save" style="position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:100px;border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;background:${sv?"rgba(27,59,140,.9)":"rgba(255,255,255,.55)"};backdrop-filter:blur(8px);color:${sv?"#fff":"var(--ink)"};box-shadow:0 3px 10px rgba(0,0,0,.15);">${ic("bookmark",{s:17,sw:2.4,f:sv?"#fff":"none"})}</button>
+function bigCard(d,custom){const sv=S.saved.has(d.id);return `<div class="card lift" onclick="${custom?`openCustomDish('${d.id}')`:`openDish('${d.id}')`}">
+  <div style="position:relative;">${custom?coverCustom(d,172,0,26):cover(d,172,0,26)}
+    <button class="press" onclick="event.stopPropagation();${custom?'':`toggleSave('${d.id}')`}" aria-label="Save" style="position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:100px;border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;background:${sv?"rgba(27,59,140,.9)":"rgba(255,255,255,.55)"};backdrop-filter:blur(8px);color:${sv?"#fff":"var(--ink)"};box-shadow:0 3px 10px rgba(0,0,0,.15);${custom?"visibility:hidden;":""}">${ic("bookmark",{s:17,sw:2.4,f:sv?"#fff":"none"})}</button>
   </div>
   <div style="padding:14px 16px 16px;">${meta(d)}<div style="font-size:14.5px;line-height:1.4;margin-top:8px;font-weight:500;">${d.blurb}</div></div></div>`;}
 
@@ -325,6 +380,13 @@ function homeHTML(){
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(27,59,140,.18);border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;flex:0 0 52px;">${ic("camera",{s:24,c:"var(--flame)"})}</div>
         <div style="flex:1;"><div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="display" style="font-weight:700;font-size:17px;color:var(--oliveDeep);">Scan your fridge</span>${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</div>
         <div style="font-size:13.5px;color:var(--inkSoft);line-height:1.4;">Get dishes from what you've already got in.</div></div>
+        ${ic("arrow-right",{s:20,c:"var(--inkSoft)"})}
+      </div>
+
+      <div class="lift glasspanel" onclick="openEditor(null)" style="margin-top:14px;border-radius:22px;padding:20px;display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;background:rgba(60,74,44,.18);border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;flex:0 0 52px;">${ic("chef",{s:24,c:"var(--olive)"})}</div>
+        <div style="flex:1;"><div class="display" style="font-weight:700;font-size:17px;color:var(--oliveDeep);margin-bottom:4px;">Add your own recipe</div>
+        <div style="font-size:13.5px;color:var(--inkSoft);line-height:1.4;">Write up your own dish or technique — just for you.</div></div>
         ${ic("arrow-right",{s:20,c:"var(--inkSoft)"})}
       </div>
 
@@ -364,7 +426,14 @@ function searchHTML(){
     <div style="padding:0 16px 24px;" id="results">${resultsHTML()}</div>
   </div>`;
 }
-function getResults(){const q=S.query.trim().toLowerCase();return DISHES.filter(d=>{const mq=!q||d.title.toLowerCase().includes(q)||d.blurb.toLowerCase().includes(q)||d.tag.toLowerCase().includes(q);return mq&&(S.meal==="all"||d.meal===S.meal)&&(S.flavor==="all"||d.flavor===S.flavor);});}
+function getResults(){
+  const q=S.query.trim().toLowerCase();
+  let r=DISHES.filter(d=>{const mq=!q||d.title.toLowerCase().includes(q)||d.blurb.toLowerCase().includes(q)||d.tag.toLowerCase().includes(q);return mq&&(S.meal==="all"||d.meal===S.meal)&&(S.flavor==="all"||d.flavor===S.flavor);});
+  if(S.diet!=="all"&&S.diet!=="omnivore"){
+    r=r.slice().sort((a,b)=>{const am=dishDiets(a).includes(S.diet)?0:1,bm=dishDiets(b).includes(S.diet)?0:1;return am-bm;});
+  }
+  return r;
+}
 function resultsHTML(){
   const r=getResults();
   let out=`<div class="mono" style="font-size:11px;color:var(--inkSoft);margin-bottom:14px;letter-spacing:1px;">${r.length} ${r.length===1?"DISH":"DISHES"}</div>`;
@@ -380,8 +449,22 @@ function savedHTML(){
   </div>`;
 }
 
+function mineHTML(){
+  const list=S.customRecipes;
+  return `<div style="min-height:70vh;">
+    <div class="glasspanel up" style="margin:14px 16px 0;border-radius:26px;padding:24px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div><span class="eyebrow">Private to you</span><h2 class="display" style="font-weight:800;font-size:32px;margin:6px 0 0;letter-spacing:-.8px;color:var(--oliveDeep);">My recipes</h2></div>
+      <button class="press" onclick="openEditor(null)" style="width:46px;height:46px;border-radius:100px;background:rgba(27,59,140,.9);border:1px solid rgba(255,255,255,.4);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 16px rgba(27,59,140,.3);">${ic("plus",{s:20,sw:2.6})}</button>
+    </div>
+    ${S.customLoading?`<div style="text-align:center;padding:60px 20px;" class="mono" style="color:var(--inkSoft);font-size:13px;">Loading your recipes…</div>`:
+      list.length===0?`<div class="up glasspanel" style="margin:20px 16px;padding:40px 30px;text-align:center;border-radius:24px;"><div style="width:72px;height:72px;border-radius:100px;background:rgba(167,176,136,.3);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;margin:0 auto 18px;">${ic("chef",{s:30,c:"var(--olive)",sw:2})}</div><div class="display" style="font-weight:700;font-size:20px;color:var(--oliveDeep);">No recipes yet</div><div style="font-size:15px;color:var(--inkSoft);margin-top:8px;line-height:1.5;max-width:260px;margin-left:auto;margin-right:auto;">Write up a dish, a technique, or a family recipe. Only you can see it.</div><button class="press btn-flame" onclick="openEditor(null)" style="margin-top:20px;width:auto;padding:0 22px;">${ic("plus",{s:17,f:"#fff"})} NEW RECIPE</button></div>`
+      :`<div style="display:flex;flex-direction:column;gap:18px;padding:18px 16px 24px;">${list.map(d=>bigCard(d,true)).join("")}</div>`}
+  </div>`;
+}
+
 function aboutHTML(){
   const link=(i,l)=>`<button class="press card" style="flex:1;padding:14px 0;border-radius:16px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink);">${ic(i,{s:22,sw:2})}<span class="mono" style="font-size:11px;font-weight:700;letter-spacing:1px;">${l}</span></button>`;
+  const dietLabel=DIETS.find(x=>x.id===S.diet)?.label||"Everything";
   return `<div>
     <div class="glasspanel up" style="margin:14px 16px 0;border-radius:26px;padding:26px 20px;">
       <span class="eyebrow">About</span>
@@ -389,7 +472,8 @@ function aboutHTML(){
       <p style="font-size:15px;line-height:1.55;color:var(--inkSoft);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
     </div>
     <div style="padding:20px 16px;">
-      ${S.loggedIn?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("mail",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Logged in as</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${S.userEmail}</div></div><button class="press" onclick="doLogout()" style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--flame);background:none;border:none;cursor:pointer;">LOG OUT</button></div>`:""}
+      ${S.loggedIn?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("mail",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Logged in as</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${S.userEmail}</div></div><button class="press" onclick="doLogout()" style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--flame);background:none;border:none;cursor:pointer;">LOG OUT</button></div>
+      <div class="lift glasspanel" onclick="openDietPicker()" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("salad",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Eating style</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${dietLabel}</div></div>${ic("arrow-right",{s:16,c:"var(--inkSoft)"})}</div>`:""}
       <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div><span class="eyebrow">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:var(--oliveDeep);line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
         ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
@@ -402,30 +486,34 @@ function aboutHTML(){
   </div>`;
 }
 
-function detailHTML(d){
+function detailHTML(d,custom){
   const sv=S.saved.has(d.id), ck=S.cooked.has(d.id), serv=S.servings||d.base;
-  const tiles=[["kcal",d.nutrition.kcal,""],["fat",d.nutrition.fat,"g"],["carbs",d.nutrition.carbs,"g"],["protein",d.nutrition.protein,"g"]];
+  const tiles=d.nutrition?[["kcal",d.nutrition.kcal,""],["fat",d.nutrition.fat,"g"],["carbs",d.nutrition.carbs,"g"],["protein",d.nutrition.protein,"g"]]:null;
+  const coverFn=custom?coverCustom:cover;
   return `<div class="up" style="padding-bottom:140px;">
-    <div style="position:relative;margin:14px 16px 0;border-radius:28px;overflow:hidden;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">${cover(d,290,0,40)}
+    <div style="position:relative;margin:14px 16px 0;border-radius:28px;overflow:hidden;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">${coverFn(d,290,0,40)}
       <button class="press" onclick="back()" style="position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.55);backdrop-filter:blur(8px);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("chevron-left",{s:20})}</button>
-      <button class="press" onclick="toggleSave('${d.id}')" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:${sv?"rgba(27,59,140,.9)":"rgba(255,255,255,.55)"};backdrop-filter:blur(8px);color:${sv?"#fff":"var(--ink)"};display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("bookmark",{s:18,sw:2.4,f:sv?"#fff":"none"})}</button>
+      ${custom?`<div style="position:absolute;top:16px;right:16px;display:flex;gap:8px;">
+        <button class="press" onclick="openEditor('${d.id}')" style="width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.55);backdrop-filter:blur(8px);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("edit",{s:16,sw:2.2})}</button>
+        <button class="press" onclick="deleteCustom('${d.id}')" style="width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.55);backdrop-filter:blur(8px);color:#B23A3A;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("trash",{s:16,sw:2.2})}</button>
+      </div>`:`<button class="press" onclick="toggleSave('${d.id}')" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:${sv?"rgba(27,59,140,.9)":"rgba(255,255,255,.55)"};backdrop-filter:blur(8px);color:${sv?"#fff":"var(--ink)"};display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("bookmark",{s:18,sw:2.4,f:sv?"#fff":"none"})}</button>`}
     </div>
     <div style="padding:22px 16px 0;">
       ${meta(d)}
-      <p style="font-size:16px;line-height:1.5;margin:12px 0 22px;font-weight:500;">${d.blurb}</p>
-      <div class="lift" onclick="appToast()" style="position:relative;height:180px;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,${d.hue[1]},${d.hue[0]});margin-bottom:24px;display:grid;place-items:center;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">
+      <p style="font-size:16px;line-height:1.5;margin:12px 0 22px;font-weight:500;">${d.blurb||""}</p>
+      ${custom?"":`<div class="lift" onclick="appToast()" style="position:relative;height:180px;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,${d.hue[1]},${d.hue[0]});margin-bottom:24px;display:grid;place-items:center;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">
         <div class="sheen"></div>
         <div style="position:absolute;inset:0;background:rgba(0,0,0,.18);"></div>
         <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;color:#fff;"><div style="width:58px;height:58px;border-radius:100px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25);">${ic("play",{s:24,f:"var(--ink)",c:"var(--ink)"})}</div><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:1px;">WATCH THE 60-SEC VERSION</span></div>
-      </div>
+      </div>`}
 
-      <div class="pop glasspanel" style="border-radius:20px;padding:18px 18px 20px;border-left:4px solid var(--flame);margin-bottom:26px;">
+      ${d.technique&&d.technique.title?`<div class="pop glasspanel" style="border-radius:20px;padding:18px 18px 20px;border-left:4px solid var(--flame);margin-bottom:26px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">${ic("flame",{s:15,c:"var(--flame)",sw:2.6})}<span class="eyebrow">The technique</span></div>
         <div class="display" style="font-weight:700;font-size:19px;line-height:1.15;color:var(--oliveDeep);margin-bottom:8px;">${d.technique.title}</div>
         <div style="font-size:14.5px;line-height:1.55;color:var(--inkSoft);">${d.technique.body}</div>
-      </div>
+      </div>`:""}
 
-      <div style="position:relative;margin-bottom:28px;">
+      ${tiles?`<div style="position:relative;margin-bottom:28px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px;">Nutrition ${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</h3>
           <span class="mono" style="font-size:10px;color:var(--inkSoft);">PER SERVING · EST.</span>
@@ -434,7 +522,7 @@ function detailHTML(d){
           ${tiles.map(t=>`<div class="card" style="flex:1;padding:14px 8px;text-align:center;border-radius:16px;"><div class="mono" style="font-weight:700;font-size:20px;color:var(--olive);">${t[1]}${t[2]}</div><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;margin-top:4px;">${t[0]}</div></div>`).join("")}
         </div>
         ${S.pro?"":`<button class="press" onclick="goPro()" style="position:absolute;inset:0;top:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;cursor:pointer;"><div style="width:42px;height:42px;border-radius:100px;background:rgba(44,54,31,.85);backdrop-filter:blur(8px);display:grid;place-items:center;">${ic("lock",{s:18,c:"var(--sage)"})}</div><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);">UNLOCK WITH PRO</span></button>`}
-      </div>
+      </div>`:""}
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;">Ingredients</h3>
@@ -446,17 +534,17 @@ function detailHTML(d){
           </div></div>
       </div>
       <div class="card" style="border-radius:20px;margin-bottom:28px;">
-        ${d.ingredients.map((g,i)=>{const q=scaleQty(g.qty,d.base,serv);return `<div style="display:flex;align-items:baseline;gap:12px;padding:13px 16px;${i<d.ingredients.length-1?"border-bottom:1px solid var(--line);":""}"><span class="mono" style="font-weight:700;font-size:14px;color:var(--flame);min-width:64px;">${q!=null?q+(g.unit?" "+g.unit:""):"—"}</span><span style="font-size:15px;font-weight:500;">${g.name}</span></div>`;}).join("")}
+        ${(d.ingredients||[]).map((g,i)=>{const q=scaleQty(g.qty,d.base,serv);return `<div style="display:flex;align-items:baseline;gap:12px;padding:13px 16px;${i<d.ingredients.length-1?"border-bottom:1px solid var(--line);":""}"><span class="mono" style="font-weight:700;font-size:14px;color:var(--flame);min-width:64px;">${q!=null?q+(g.unit?" "+g.unit:""):"—"}</span><span style="font-size:15px;font-weight:500;">${g.name}</span></div>`;}).join("")||`<div style="padding:16px;color:var(--inkSoft);font-size:14px;">No ingredients listed.</div>`}
       </div>
 
       <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;margin-bottom:14px;">Method</h3>
       <div style="display:flex;flex-direction:column;gap:14px;">
-        ${d.steps.map((s,i)=>`<div style="display:flex;gap:14px;"><span class="mono" style="font-weight:700;font-size:13px;color:var(--sage);min-width:26px;padding-top:2px;">${String(i+1).padStart(2,"0")}</span><span style="font-size:15px;line-height:1.5;">${s.text}${s.timer>0?` <span class="mono" style="font-size:11px;font-weight:700;color:var(--flame);margin-left:8px;background:rgba(27,59,140,.12);padding:2px 7px;border-radius:100px;white-space:nowrap;">⏱ ${fmt(s.timer)}</span>`:""}</span></div>`).join("")}
+        ${(d.steps||[]).map((s,i)=>`<div style="display:flex;gap:14px;"><span class="mono" style="font-weight:700;font-size:13px;color:var(--sage);min-width:26px;padding-top:2px;">${String(i+1).padStart(2,"0")}</span><span style="font-size:15px;line-height:1.5;">${s.text}${s.timer>0?` <span class="mono" style="font-size:11px;font-weight:700;color:var(--flame);margin-left:8px;background:rgba(27,59,140,.12);padding:2px 7px;border-radius:100px;white-space:nowrap;">⏱ ${fmt(s.timer)}</span>`:""}</span></div>`).join("")||`<div style="color:var(--inkSoft);font-size:14px;">No steps listed.</div>`}
       </div>
     </div>
     <div style="position:fixed;bottom:96px;left:0;right:0;padding:0 16px;display:flex;gap:12px;max-width:480px;margin:0 auto;">
       <button class="press" onclick="markCooked('${d.id}')" aria-label="Cooked" style="flex:0 0 56px;height:56px;border-radius:18px;cursor:pointer;border:1px solid ${ck?"rgba(167,176,136,.7)":"var(--glassBorder)"};background:${ck?"rgba(167,176,136,.85)":"var(--glassStrong)"};backdrop-filter:blur(14px);color:${ck?"var(--oliveDeep)":"var(--ink)"};display:grid;place-items:center;box-shadow:var(--glassShadow);">${ic("check",{s:22,sw:3})}</button>
-      <button class="btn-flame press" onclick="startCook('${d.id}')">${ic("flame",{s:19,f:"#fff"})} START COOKING</button>
+      <button class="btn-flame press" onclick="startCook('${d.id}',${custom?"true":"false"})" ${(d.steps||[]).length===0?"disabled":""}>${ic("flame",{s:19,f:"#fff"})} START COOKING</button>
     </div>
   </div>`;
 }
@@ -464,8 +552,10 @@ function detailHTML(d){
 /* ----------------------------- OVERLAYS ----------------------------- */
 function overlayHTML(){
   let h="";
-  if(S.cooking) h+=cookHTML(D(S.cooking));
+  if(S.cooking) h+=cookHTML(S.cookingCustom?C(S.cooking):D(S.cooking));
   if(S.showScan) h+=scanHTML();
+  if(S.showEditor) h+=editorHTML();
+  if(S.onboarding) h+=onboardHTML();
   if(S.showPro) h+=proHTML();
   if(S.showLogin) h+=loginHTML();
   return h;
@@ -530,6 +620,119 @@ function scanHTML(){
     <div style="flex:1;overflow-y:auto;padding:20px;">${body}</div>
   </div>`;
 }
+
+/* ---- custom recipe editor ---- */
+function blankDraft(){
+  return {title:"",blurb:"",meal:"dinner",flavor:"savoury",minutes:20,level:"Easy",base_servings:4,
+    technique_title:"",technique_body:"",
+    ingredients:[{qty:null,unit:"",name:""}],
+    steps:[{text:"",timer:0}]};
+}
+function openEditor(id){
+  if(!ensureLogin())return;
+  S.showEditor=true;
+  S.editorId=id;
+  S.editorDraft=id?JSON.parse(JSON.stringify({...C(id)})):blankDraft();
+  render();
+}
+function closeEditor(){S.showEditor=false;S.editorId=null;S.editorDraft=null;render();}
+function editorField(k,v){S.editorDraft[k]=v;}
+function editorIngField(i,k,v){S.editorDraft.ingredients[i][k]=k==="qty"?(v===""?null:parseFloat(v)):v;}
+function editorAddIng(){S.editorDraft.ingredients.push({qty:null,unit:"",name:""});render();}
+function editorRemoveIng(i){S.editorDraft.ingredients.splice(i,1);render();}
+function editorStepField(i,k,v){S.editorDraft.steps[i][k]=k==="timer"?(parseInt(v)||0):v;}
+function editorAddStep(){S.editorDraft.steps.push({text:"",timer:0});render();}
+function editorRemoveStep(i){S.editorDraft.steps.splice(i,1);render();}
+
+function editorHTML(){
+  const d=S.editorDraft, editing=!!S.editorId;
+  return `<div style="position:fixed;inset:0;background:var(--paper);z-index:68;display:flex;flex-direction:column;max-width:480px;margin:0 auto;">
+    <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);">
+      <div style="display:inline-flex;align-items:center;gap:8px;">${ic("chef",{s:18,c:"var(--olive)"})}<span class="mono" style="font-size:13px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);">${editing?"EDIT RECIPE":"NEW RECIPE"}</span></div>
+      <button class="press" onclick="closeEditor()" style="background:rgba(20,33,61,.08);border:1px solid var(--line);color:var(--ink);width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;">
+      <div class="field"><label>Title</label><input id="ed-title" value="${(d.title||"").replace(/"/g,"&quot;")}" oninput="editorField('title',this.value)" placeholder="e.g. Mum's lentil soup" /></div>
+      <div class="field"><label>Short description</label><textarea id="ed-blurb" oninput="editorField('blurb',this.value)" placeholder="One line about this dish">${d.blurb||""}</textarea></div>
+
+      <div style="display:flex;gap:10px;">
+        <div class="field" style="flex:1;"><label>Meal</label>
+          <select onchange="editorField('meal',this.value)">${MEALS.map(m=>`<option value="${m.id}" ${d.meal===m.id?"selected":""}>${m.label}</option>`).join("")}</select>
+        </div>
+        <div class="field" style="flex:1;"><label>Flavor</label>
+          <select onchange="editorField('flavor',this.value)"><option value="savoury" ${d.flavor==="savoury"?"selected":""}>Savoury</option><option value="sweet" ${d.flavor==="sweet"?"selected":""}>Sweet</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="field" style="flex:1;"><label>Minutes</label><input type="number" min="1" value="${d.minutes}" oninput="editorField('minutes',parseInt(this.value)||1)" /></div>
+        <div class="field" style="flex:1;"><label>Level</label>
+          <select onchange="editorField('level',this.value)"><option ${d.level==="Easy"?"selected":""}>Easy</option><option ${d.level==="Medium"?"selected":""}>Medium</option><option ${d.level==="Hard"?"selected":""}>Hard</option></select>
+        </div>
+        <div class="field" style="flex:1;"><label>Base servings</label><input type="number" min="1" value="${d.base_servings}" oninput="editorField('base_servings',parseInt(this.value)||1)" /></div>
+      </div>
+
+      <div class="field"><label>Technique tip (optional)</label><input value="${(d.technique_title||"").replace(/"/g,"&quot;")}" oninput="editorField('technique_title',this.value)" placeholder="Short headline" /></div>
+      <div class="field"><textarea oninput="editorField('technique_body',this.value)" placeholder="Why this step matters">${d.technique_body||""}</textarea></div>
+
+      <h3 class="display" style="font-weight:700;font-size:18px;margin:18px 0 10px;">Ingredients</h3>
+      ${d.ingredients.map((g,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+        <input style="width:64px;background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:12px;padding:11px;font-size:14px;" type="number" placeholder="qty" value="${g.qty??""}" oninput="editorIngField(${i},'qty',this.value)" />
+        <input style="width:64px;background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:12px;padding:11px;font-size:14px;" placeholder="unit" value="${g.unit||""}" oninput="editorIngField(${i},'unit',this.value)" />
+        <input style="flex:1;background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:12px;padding:11px;font-size:14px;" placeholder="ingredient" value="${(g.name||"").replace(/"/g,"&quot;")}" oninput="editorIngField(${i},'name',this.value)" />
+        <button class="press" onclick="editorRemoveIng(${i})" style="width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(178,58,58,.08);color:#B23A3A;display:grid;place-items:center;cursor:pointer;flex:0 0 36px;">${ic("trash",{s:15})}</button>
+      </div>`).join("")}
+      <button class="ghostbtn" onclick="editorAddIng()" style="margin-bottom:20px;">${ic("plus",{s:14})} ADD INGREDIENT</button>
+
+      <h3 class="display" style="font-weight:700;font-size:18px;margin:6px 0 10px;">Steps</h3>
+      ${d.steps.map((s,i)=>`<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;">
+        <span class="mono" style="padding-top:13px;font-size:12px;color:var(--sage);font-weight:700;min-width:20px;">${i+1}</span>
+        <div style="flex:1;">
+          <textarea style="margin-bottom:6px;" placeholder="What to do" oninput="editorStepField(${i},'text',this.value)">${s.text||""}</textarea>
+          <input type="number" min="0" style="width:140px;background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:12px;padding:9px 11px;font-size:13px;" placeholder="timer (seconds, optional)" value="${s.timer||""}" oninput="editorStepField(${i},'timer',this.value)" />
+        </div>
+        <button class="press" onclick="editorRemoveStep(${i})" style="width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(178,58,58,.08);color:#B23A3A;display:grid;place-items:center;cursor:pointer;flex:0 0 36px;margin-top:2px;">${ic("trash",{s:15})}</button>
+      </div>`).join("")}
+      <button class="ghostbtn" onclick="editorAddStep()" style="margin-bottom:10px;">${ic("plus",{s:14})} ADD STEP</button>
+    </div>
+    <div style="padding:14px 20px 26px;background:rgba(255,255,255,.6);backdrop-filter:blur(16px);border-top:1px solid var(--line);">
+      <button class="btn-flame press" onclick="saveCustom()" ${S.editorSaving?"disabled":""}>${ic("check",{s:18,f:"#fff"})} ${S.editorSaving?"SAVING…":(editing?"SAVE CHANGES":"SAVE RECIPE")}</button>
+    </div>
+  </div>`;
+}
+
+/* ---- onboarding (diet question) ---- */
+function onboardHTML(){
+  const step=S.onboardStep;
+  let body;
+  if(step===0){
+    body=`<div class="up">
+      <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
+      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">How do you eat?</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">We'll point out dishes that fit, first.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${DIETS.map(d=>`<button class="press" onclick="pickDiet('${d.id}')" style="text-align:left;padding:15px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between;">${d.label}${ic("arrow-right",{s:17,c:"rgba(255,255,255,.5)"})}</button>`).join("")}
+      </div>
+    </div>`;
+  } else {
+    body=`<div class="up" style="text-align:center;">
+      <div style="width:56px;height:56px;border-radius:100px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;margin:0 auto 18px;">${ic("check",{s:24,c:"var(--sage)",sw:3})}</div>
+      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;margin-bottom:8px;">You're set.</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;max-width:280px;margin:0 auto 26px;">We'll flag dishes that match how you eat. You can change this anytime in your profile.</p>
+      <button class="btn-flame press" onclick="finishOnboardToPro()">${ic("crown",{s:18})} SEE MISE PRO</button>
+      <button class="press" onclick="finishOnboard()" style="margin-top:12px;background:none;border:none;color:rgba(255,255,255,.6);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;">SKIP FOR NOW</button>
+    </div>`;
+  }
+  return `<div style="position:fixed;inset:0;z-index:78;display:flex;flex-direction:column;justify-content:center;background:rgba(15,24,48,.96);backdrop-filter:blur(10px);padding:24px;">
+    <div style="max-width:380px;margin:0 auto;width:100%;">${body}</div>
+  </div>`;
+}
+function pickDiet(id){S.onboardDiet=id;S.onboardStep=1;render();
+  if(supa&&S.loggedIn){supa.auth.getUser().then(({data})=>{const u=data&&data.user;if(u){supa.from("profiles").update({diet:id}).eq("id",u.id).then(()=>{});}});}
+  S.diet=id;
+}
+function finishOnboard(){S.onboarding=false;render();}
+function finishOnboardToPro(){S.onboarding=false;S.showPro=true;render();}
+
 function proHTML(){
   const perks=[["zap","Calories & macros","Per-serving nutrition on every dish."],["camera","Scan your fridge","Snap what you've got, get dishes you can make now."],["sparkles","Portion scaling","Macros that follow your serving size."]];
   return `<div onclick="closePro()" style="position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,18,14,.45);backdrop-filter:blur(4px);">
@@ -556,7 +759,7 @@ function loginHTML(){
     body=`<div>
       <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
       <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, marking what you've cooked, and cooking mode are for logged-in cooks only.</p>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, your own recipes, and cooking mode are for logged-in cooks only.</p>
       <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:10px;">
         ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
         <input id="loginEmail" type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
@@ -579,8 +782,8 @@ function loginHTML(){
 
 /* ------------------------------- NAV -------------------------------- */
 function navHTML(){
-  const items=[["home","home","HOME"],["search","search","BROWSE"],["saved","bookmark","SAVED"],["about","user","ME"]];
-  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId;const badge=(id==="saved"&&S.saved.size)?`<span class="navbadge">${S.saved.size}</span>`:"";return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&id==="saved"?"var(--oliveDeep)":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}${badge}</button>`;}).join("")}</div>`;
+  const items=[["home","home","HOME"],["search","search","BROWSE"],["mine","chef","MINE"],["saved","bookmark","SAVED"],["about","user","ME"]];
+  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId&&!S.openCustom;const badge=(id==="saved"&&S.saved.size)?`<span class="navbadge">${S.saved.size}</span>`:(id==="mine"&&S.customRecipes.length?`<span class="navbadge">${S.customRecipes.length}</span>`:"");return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&(id==="saved")?"var(--oliveDeep)":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}${badge}</button>`;}).join("")}</div>`;
 }
 
 /* ----------------------------- ACTIONS ------------------------------ */
@@ -591,9 +794,10 @@ function render(){
   if(S.cooking) mountTimer();
 }
 function nav(){render();window.scrollTo(0,0);}
-function setTab(t){if(t==="saved"&&!ensureLogin())return;S.openId=null;S.tab=t;nav();}
-function openDish(id){S.openId=id;S.servings=null;nav();}
-function back(){S.openId=null;nav();}
+function setTab(t){if((t==="saved"||t==="mine")&&!ensureLogin())return;S.openId=null;S.openCustom=null;S.tab=t;nav();}
+function openDish(id){S.openId=id;S.openCustom=null;S.servings=null;nav();}
+function openCustomDish(id){if(!ensureLogin())return;S.openCustom=id;S.openId=null;S.servings=null;nav();}
+function back(){S.openId=null;S.openCustom=null;nav();}
 function toggleSave(id){if(!ensureLogin())return;S.saved.has(id)?S.saved.delete(id):S.saved.add(id);render();}
 function markCooked(id){if(!ensureLogin())return;S.cooked.has(id)?S.cooked.delete(id):S.cooked.add(id);render();}
 function setServings(v){S.servings=Math.max(1,v);render();}
@@ -618,6 +822,7 @@ function openScan(){if(!ensureLogin())return;if(S.pro){S.showScan=true;S.scanPha
 function closeScan(){S.showScan=false;render();}
 function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;S.authSent=false;S.authError="";render();return false;}
 function closeLogin(){S.showLogin=false;render();}
+function openDietPicker(){S.onboarding=true;S.onboardStep=0;render();}
 
 /* ---- real Supabase magic-link auth ---- */
 function sendMagicLink(){
@@ -638,22 +843,86 @@ function sendMagicLink(){
 }
 function doLogout(){
   if(supa) supa.auth.signOut();
-  S.loggedIn=false;S.pro=false;S.userEmail="";S.tab="home";S.openId=null;
+  S.loggedIn=false;S.pro=false;S.userEmail="";S.tab="home";S.openId=null;S.openCustom=null;S.customRecipes=[];S.diet="all";
   render();
 }
 
-/* fetch or create a profile row for the signed-in user, and read is_pro */
+/* fetch or create a profile row for the signed-in user, and read is_pro + diet.
+   Also detects brand-new users (no row yet) to trigger onboarding. */
 async function syncProfile(user){
   if(!supa||!user) return;
+  let isNewUser=false;
   try{
     let {data:profile,error}=await supa.from("profiles").select("*").eq("id",user.id).maybeSingle();
     if(!profile){
-      const ins=await supa.from("profiles").insert({id:user.id,email:user.email,is_pro:false}).select().maybeSingle();
+      const ins=await supa.from("profiles").insert({id:user.id,email:user.email,is_pro:false,diet:"all"}).select().maybeSingle();
       profile=ins.data;
+      isNewUser=true;
     }
     S.pro=!!(profile&&profile.is_pro);
-  }catch(e){ /* table may not exist yet — fail quietly, app still works without Pro persistence */ }
+    S.diet=(profile&&profile.diet)||"all";
+  }catch(e){ /* table may not exist yet — fail quietly, app still works without persistence */ }
+  await loadCustomRecipes(user);
+  if(isNewUser){S.onboarding=true;S.onboardStep=0;}
   render();
+}
+
+async function loadCustomRecipes(user){
+  if(!supa||!user)return;
+  S.customLoading=true;
+  try{
+    const {data,error}=await supa.from("custom_recipes").select("*").eq("user_id",user.id).order("created_at",{ascending:false});
+    if(!error&&data){
+      S.customRecipes=data.map(r=>({
+        id:r.id,title:r.title,blurb:r.blurb,meal:r.meal,flavor:r.flavor,minutes:r.minutes,level:r.level,
+        base:r.base_servings,tag:"Mine",hue:["#1B2A4A","#3E63B5"],
+        technique:{title:r.technique_title||"",body:r.technique_body||""},
+        ingredients:r.ingredients||[], steps:r.steps||[]
+      }));
+    }
+  }catch(e){}
+  S.customLoading=false;
+}
+
+async function saveCustom(){
+  if(!supa||!S.loggedIn){appToast("Log in to save recipes");return;}
+  const d=S.editorDraft;
+  if(!d.title||!d.title.trim()){appToast("Give your recipe a title");return;}
+  S.editorSaving=true;render();
+  try{
+    const {data:{user}}=await supa.auth.getUser();
+    const row={
+      user_id:user.id,title:d.title.trim(),blurb:d.blurb||"",meal:d.meal,flavor:d.flavor,
+      minutes:d.minutes||20,level:d.level||"Easy",base_servings:d.base_servings||4,
+      technique_title:d.technique_title||"",technique_body:d.technique_body||"",
+      ingredients:(d.ingredients||[]).filter(g=>g.name&&g.name.trim()),
+      steps:(d.steps||[]).filter(s=>s.text&&s.text.trim()),
+    };
+    let res;
+    if(S.editorId){
+      res=await supa.from("custom_recipes").update(row).eq("id",S.editorId).select().maybeSingle();
+    } else {
+      res=await supa.from("custom_recipes").insert(row).select().maybeSingle();
+    }
+    if(res.error){appToast("Couldn't save — "+res.error.message);S.editorSaving=false;render();return;}
+    await loadCustomRecipes(user);
+    S.editorSaving=false;S.showEditor=false;S.editorId=null;S.editorDraft=null;
+    S.tab="mine";S.openId=null;S.openCustom=null;
+    appToast("Recipe saved");
+    nav();
+  }catch(e){S.editorSaving=false;appToast("Something went wrong saving");render();}
+}
+
+async function deleteCustom(id){
+  if(!supa){return;}
+  try{
+    await supa.from("custom_recipes").delete().eq("id",id);
+    const {data:{user}}=await supa.auth.getUser();
+    await loadCustomRecipes(user);
+    S.openCustom=null;S.tab="mine";
+    appToast("Recipe deleted");
+    nav();
+  }catch(e){appToast("Couldn't delete");render();}
 }
 
 /* called once on load: wires up Supabase auth state + checks for a Stripe success redirect */
@@ -669,7 +938,7 @@ async function initAuth(){
       S.loggedIn=true;S.userEmail=session.user.email;S.showLogin=false;S.authSent=false;
       syncProfile(session.user);
     } else if(event==="SIGNED_OUT"){
-      S.loggedIn=false;S.pro=false;S.userEmail="";
+      S.loggedIn=false;S.pro=false;S.userEmail="";S.customRecipes=[];S.diet="all";
       render();
     }
   });
@@ -711,14 +980,14 @@ function setMeal(m){S.meal=m;render();}
 function setFlavor(f){S.flavor=f;render();}
 function clearSearch(){S.query="";render();}
 function onSearch(v){S.query=v;document.getElementById("results").innerHTML=resultsHTML();}
-function startCook(id){if(!ensureLogin())return;S.cooking=id;S.cookStep=0;render();}
+function startCook(id,custom){if(!ensureLogin())return;S.cooking=id;S.cookingCustom=!!custom;S.cookStep=0;render();}
 function exitCook(){clearInterval(T.id);S.cooking=null;render();}
 function cookNext(){clearInterval(T.id);S.cookStep++;render();}
 function cookPrev(){clearInterval(T.id);S.cookStep--;render();}
 
 /* TIMER */
 function mountTimer(){
-  const d=D(S.cooking),step=d.steps[S.cookStep];
+  const d=S.cookingCustom?C(S.cooking):D(S.cooking),step=d.steps[S.cookStep];
   if(!step||step.timer<=0)return;
   clearInterval(T.id);T.total=step.timer;T.left=step.timer;T.running=false;T.done=false;
   paintTimer();
