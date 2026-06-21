@@ -17,14 +17,11 @@
     --olive:#1B2A4A; --oliveDeep:#0F1830; --sage:#8FA8C9;
     --flame:#1B3B8C; --flameSoft:#3E63B5; --gold:#5C8AC9;
     --line:rgba(20,33,61,.10);
-
-    /* glass tokens */
     --glass:rgba(255,255,255,.50);
     --glassStrong:rgba(255,255,255,.68);
     --glassBorder:rgba(255,255,255,.85);
     --glassShadow:0 8px 32px rgba(60,52,30,.12), inset 0 1px 0 rgba(255,255,255,.6);
     --blur:18px;
-
     --display:'Bricolage Grotesque',sans-serif; --body:'Hanken Grotesk',system-ui,sans-serif; --mono:'Space Mono',monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -42,7 +39,7 @@
   svg{vertical-align:middle;display:inline-block;}
   button{font-family:inherit;}
   .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  input{font-family:inherit;}
+  input,textarea,select{font-family:inherit;}
 
   .blob{position:fixed;border-radius:50%;filter:blur(60px);z-index:0;pointer-events:none;opacity:.55;}
   .blob1{width:340px;height:340px;top:-80px;left:-100px;background:radial-gradient(circle,var(--flameSoft),transparent 70%);animation:drift1 22s ease-in-out infinite;}
@@ -66,21 +63,8 @@
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--flame);font-weight:700;}
   .mono{font-family:var(--mono);} .display{font-family:var(--display);}
 
-  .card{
-    background:var(--glass);
-    backdrop-filter:blur(var(--blur)) saturate(160%);
-    -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
-    border:1px solid var(--glassBorder);
-    border-radius:22px;overflow:hidden;
-    box-shadow:var(--glassShadow);
-  }
-  .glasspanel{
-    background:var(--glassStrong);
-    backdrop-filter:blur(var(--blur)) saturate(160%);
-    -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
-    border:1px solid var(--glassBorder);
-    box-shadow:var(--glassShadow);
-  }
+  .card{background:var(--glass);backdrop-filter:blur(var(--blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--blur)) saturate(160%);border:1px solid var(--glassBorder);border-radius:22px;overflow:hidden;box-shadow:var(--glassShadow);}
+  .glasspanel{background:var(--glassStrong);backdrop-filter:blur(var(--blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--blur)) saturate(160%);border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);}
   .lift{transition:transform .25s cubic-bezier(.2,.7,.2,1);cursor:pointer;}
   .lift:active{transform:scale(.985);}
   @media(hover:hover){.lift:hover{transform:translateY(-4px);}}
@@ -91,13 +75,14 @@
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
   @keyframes sheet{from{transform:translateY(100%);}to{transform:none;}}
   @keyframes scanline{0%{top:6%;}100%{top:88%;}}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
   .up{animation:up .5s cubic-bezier(.2,.7,.2,1) both;}
   .pop{animation:pop .35s cubic-bezier(.2,.7,.2,1) both;}
   .sheet{animation:sheet .32s cubic-bezier(.2,.7,.2,1) both;}
 
   .meta{display:flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--inkSoft);align-items:center;}
   .meta .i{display:inline-flex;align-items:center;gap:5px;}
-  .pro-pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);background:rgba(167,176,136,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.6);padding:3px 8px;border-radius:100px;}
 
   .chip{flex:0 0 auto;font-family:var(--body);font-weight:600;font-size:13.5px;padding:8px 15px;border-radius:100px;cursor:pointer;border:1px solid var(--glassBorder);background:var(--glass);backdrop-filter:blur(10px);color:var(--inkSoft);}
   .chip.active{border-color:rgba(60,74,44,.5);background:rgba(60,74,44,.85);backdrop-filter:blur(10px);color:#fff;}
@@ -105,36 +90,23 @@
   .btn-flame{height:56px;border-radius:18px;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,var(--flame),var(--flameSoft));color:#fff;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 28px rgba(27,59,140,.35), inset 0 1px 0 rgba(255,255,255,.5);width:100%;}
   .btn-flame:disabled{opacity:.55;cursor:default;}
 
-  .nav{
-    position:fixed;bottom:16px;left:16px;right:16px;max-width:448px;margin:0 auto;
-    background:rgba(255,255,255,.55);
-    backdrop-filter:blur(22px) saturate(180%);
-    -webkit-backdrop-filter:blur(22px) saturate(180%);
-    display:flex;padding:10px 6px;border-radius:26px;
-    border:1px solid rgba(255,255,255,.8);
-    box-shadow:0 14px 34px rgba(43,38,32,.18), inset 0 1px 0 rgba(255,255,255,.7);
-    z-index:30;
-  }
+  .nav{position:fixed;bottom:16px;left:16px;right:16px;max-width:448px;margin:0 auto;background:rgba(255,255,255,.55);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);display:flex;padding:10px 6px;border-radius:26px;border:1px solid rgba(255,255,255,.8);box-shadow:0 14px 34px rgba(43,38,32,.18), inset 0 1px 0 rgba(255,255,255,.7);z-index:30;}
   .navbtn{flex:1;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--inkSoft);padding:6px 0;border-radius:18px;position:relative;}
   .navbtn.active{color:var(--oliveDeep);background:rgba(255,255,255,.6);}
   .navbtn span{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;}
   .navdot{width:5px;height:5px;border-radius:100px;background:var(--flame);margin-top:1px;}
   .navbadge{position:absolute;top:2px;right:50%;transform:translateX(18px);min-width:16px;height:16px;padding:0 4px;border-radius:100px;background:var(--flame);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.6);}
 
-  .toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);background:rgba(44,54,31,.85);backdrop-filter:blur(14px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:90;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;border:1px solid rgba(255,255,255,.2);max-width:86%;text-align:center;}
+  .toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);background:rgba(44,54,31,.85);backdrop-filter:blur(14px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:120;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;border:1px solid rgba(255,255,255,.2);max-width:86%;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 
   .sheen{position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.18) 100%);pointer-events:none;}
 
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
   .field label{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--inkSoft);font-weight:700;}
-  .field input,.field textarea,.field select{
-    background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:14px;
-    padding:13px 14px;font-size:15px;color:var(--ink);outline:none;font-family:var(--body);width:100%;
-  }
+  .field input,.field textarea,.field select{background:rgba(255,255,255,.55);border:1px solid var(--glassBorder);border-radius:14px;padding:13px 14px;font-size:15px;color:var(--ink);outline:none;font-family:var(--body);width:100%;}
   .field textarea{resize:vertical;min-height:64px;line-height:1.4;}
   .ghostbtn{background:rgba(255,255,255,.5);border:1px solid var(--glassBorder);border-radius:14px;padding:11px 16px;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1px;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
-  .danger{color:#B23A3A;}
 </style>
 </head>
 <body>
@@ -156,19 +128,12 @@
 <div id="overlay"></div>
 <div class="toast" id="toast"></div>
 
-<!-- Supabase client (loaded before our app script) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script>
 /* ------------------------------- DATA ------------------------------- */
-const BRAND="MISE", TAGLINE="everything in its place", HANDLE="@mise.cooks", PRO_PRICE="€3.99";
+const BRAND="MISE", TAGLINE="everything in its place", HANDLE="@mise.cooks";
 
-/* ===== STRIPE ===== paste your Stripe Payment Link between the quotes (https://buy.stripe.com/...) */
-const PRO_PAYMENT_LINK="https://buy.stripe.com/4gM28rcdg88c6U21vX1Jm01";
-
-/* ===== SUPABASE ===== paste your Project URL and anon public key between the quotes.
-   Find them in your Supabase dashboard: Project Settings -> API.
-   The anon key is safe to use in client-side code (it's the "public" key, not the service_role secret). */
 const SUPABASE_URL="https://msmwaldktlrxhxvarepj.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zbXdhbGRrdGxyeGh4dmFyZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzQwNzcsImV4cCI6MjA5NzU1MDA3N30.Lpr8P9SsTG_7i_iPORqu2gt9pffpnvaZ_oqx5wsCQwI";
 
@@ -182,11 +147,9 @@ const MEALS=[
 const DIETS=[
   {id:"all",label:"Everything"},
   {id:"vegetarian",label:"Vegetarian"},
-  {id:"vegan",label:"Vegan"},
   {id:"pescatarian",label:"Pescatarian"},
-  {id:"omnivore",label:"No restrictions, I eat it all"},
+  {id:"vegan",label:"Vegan"},
 ];
-/* naive ingredient-based diet matching for the built-in dish list */
 const MEAT_WORDS=["chicken","beef","pork","thigh","bacon","ham","lamb","sausage"];
 const FISH_WORDS=["fish","salmon","tuna","anchov","prawn","shrimp"];
 const ANIMAL_WORDS=["egg","yolk","milk","cheese","butter","cream","honey"];
@@ -195,12 +158,25 @@ function dishDiets(d){
   const hasMeat=MEAT_WORDS.some(w=>text.includes(w));
   const hasFish=FISH_WORDS.some(w=>text.includes(w));
   const hasAnimal=ANIMAL_WORDS.some(w=>text.includes(w));
-  const out=["omnivore"];
+  const out=[];
   if(!hasMeat&&!hasFish) out.push("vegetarian");
   if(!hasMeat&&!hasFish&&!hasAnimal) out.push("vegan");
   if(!hasMeat) out.push("pescatarian");
   return out;
 }
+
+/* companion animals + suggested names */
+const ANIMALS=[["dolphin","🐬"],["turtle","🐢"],["fox","🦊"],["penguin","🐧"],["cat","🐱"],["bear","🐻"]];
+const ANIMAL_EMOJI=(a)=>{const f=ANIMALS.find(x=>x[0]===a);return f?f[1]:"🐾";};
+const BUDDY_NAMES={dolphin:"Finn",turtle:"Shelly",fox:"Pip",penguin:"Waddle",cat:"Miso",bear:"Biscuit"};
+
+/* onboarding testimonial cards — PLACEHOLDER copy, swap for real ones before you market the app */
+const REVIEWS=[
+  {name:"Marina G.",text:"I finally stopped burning onions. The little technique notes are the bit no other app bothers with.",stars:5},
+  {name:"Tom R.",text:"Cooked something new every night this week. My buddy guilt-trips me in the best possible way.",stars:5},
+  {name:"Aisha K.",text:"Went from microwave meals to actually plating things. Genuinely didn't expect that from an app.",stars:5},
+];
+
 const DISHES=[
   {id:"pa-amb-oli",title:"Pa amb Oli",meal:"breakfast",flavor:"savoury",blurb:"The Mallorcan breakfast that's basically nothing — and everything.",minutes:10,level:"Easy",tag:"Foundations",base:2,hue:["#1B3B8C","#3E63B5"],nutrition:{kcal:210,fat:9,carbs:27,protein:5},
    technique:{title:"Salt the tomato, not the bread",body:"Salt pulls water out of the tomato so the pulp turns juicy and soaks in — instead of running straight off dry bread. Season the cut face and wait 30 seconds."},
@@ -215,7 +191,7 @@ const DISHES=[
    ingredients:[{qty:4,unit:"",name:"eggs, fridge-cold"},{qty:null,unit:"",name:"water"},{qty:null,unit:"",name:"ice, for the bath"}],
    steps:[{text:"Bring water to a rolling boil and set up a bowl of ice water beside it.",timer:0},{text:"Lower the cold eggs in gently with a spoon. Start the timer.",timer:0},{text:"Boil for exactly 6 minutes 30 seconds at a steady simmer.",timer:390},{text:"Scoop into the ice bath and leave 2 minutes before peeling.",timer:120}]},
   {id:"sofrito",title:"Sofrito",meal:"side",flavor:"savoury",blurb:"The slow-cooked base that quietly carries half of Spanish cooking.",minutes:30,level:"Easy",tag:"Foundations",base:1,hue:["#1B2A4A","#2A3D63"],nutrition:{kcal:90,fat:7,carbs:6,protein:1},
-   technique:{title:"// the base layer — don't rush the build",body:"Cook the onions low and slow until jammy and deep gold, a full 20 minutes. This is the flavour every dish on top of it inherits. Skip it and everything tastes thin."},
+   technique:{title:"The base layer — don't rush the build",body:"Cook the onions low and slow until jammy and deep gold, a full 20 minutes. This is the flavour every dish on top of it inherits. Skip it and everything tastes thin."},
    ingredients:[{qty:2,unit:"",name:"onions, finely diced"},{qty:4,unit:"",name:"ripe tomatoes, grated"},{qty:3,unit:"cloves",name:"garlic, minced"},{qty:4,unit:"tbsp",name:"olive oil"},{qty:null,unit:"",name:"salt"}],
    steps:[{text:"Warm the oil over low heat and add the onions with a pinch of salt.",timer:0},{text:"Cook low and slow, stirring now and then, until jammy and deep gold.",timer:1200},{text:"Add the garlic and cook one minute until fragrant.",timer:60},{text:"Add the grated tomato and cook down until darkened and no liquid pools.",timer:600},{text:"Taste, season, and use as the base for rice, stews or beans.",timer:0}]},
   {id:"crispy-thighs",title:"Crispy Chicken Thighs",meal:"dinner",flavor:"savoury",blurb:"Skin that shatters like glass. One pan, almost no effort.",minutes:35,level:"Medium",tag:"Technique",base:4,hue:["#14213D","#1B3B8C"],nutrition:{kcal:280,fat:20,carbs:0,protein:24},
@@ -242,8 +218,14 @@ const DISHES=[
 const FEATURED_ID="pa-amb-oli";
 
 /* ------------------------------ STATE ------------------------------- */
-const S={tab:"home",openId:null,openCustom:null,cooking:null,cookingCustom:false,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,authBusy:false,authSent:false,authError:"",userEmail:"",scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all",diet:"all",
-  onboarding:false,onboardStep:0,onboardDiet:null,
+const S={tab:"home",openId:null,openCustom:null,cooking:null,cookingCustom:false,cookStep:0,
+  saved:new Set(),cooked:new Set(),
+  showScan:false,loggedIn:false,showLogin:false,authMode:"register",authBusy:false,authError:"",userEmail:"",
+  scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},
+  servings:null,query:"",meal:"all",flavor:"all",diet:"all",
+  onboarding:false,onboardStep:0,
+  answers:{diet:null,goal:null,skill:null,trackHealth:null,weight:null,target:null},
+  companion:{animal:null,name:""},
   customRecipes:[],customLoading:false,
   showEditor:false,editorId:null,editorDraft:null,editorSaving:false,
 };
@@ -271,7 +253,6 @@ heart:`<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-
 camera:`<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>`,
 lock:`<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>`,
 mail:`<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>`,
-crown:`<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/>`,
 zap:`<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
 sparkles:`<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>`,
 "rotate-ccw":`<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>`,
@@ -316,7 +297,6 @@ const cover=(d,h,r,fs)=>{
   <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.4);">${d.title}</div>
 </div>`;
 };
-/* lightweight cover for custom recipes — no AI image, just a gradient + chef icon */
 const coverCustom=(d,h,r,fs)=>`<div style="position:relative;height:${h}px;border-radius:${r}px;overflow:hidden;background:linear-gradient(135deg,${d.hue[0]},${d.hue[1]});display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
   <div class="sheen"></div>
   <div style="position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.35);padding:4px 9px;border-radius:100px;display:inline-flex;align-items:center;gap:5px;">${ic("chef",{s:11})} MY RECIPE</div>
@@ -324,11 +304,11 @@ const coverCustom=(d,h,r,fs)=>`<div style="position:relative;height:${h}px;borde
 </div>`;
 const meta=(d)=>`<div class="meta"><span class="i">${ic("clock",{s:13,sw:2.4})} ${d.minutes} min</span><span style="opacity:.4">·</span><span class="i">${ic("flame",{s:13,sw:2.4})} ${d.level}</span></div>`;
 const dietBadge=(d)=>{
-  if(S.diet==="all"||S.diet==="omnivore") return "";
+  if(S.diet==="all") return "";
   const ds=dishDiets(d);
   if(!ds.includes(S.diet)) return "";
-  const label=DIETS.find(x=>x.id===S.diet).label;
-  return `<span class="mono" style="font-size:9.5px;font-weight:700;letter-spacing:.5px;color:var(--oliveDeep);background:rgba(167,176,136,.55);padding:2px 7px;border-radius:100px;margin-left:6px;">${label.toUpperCase()}</span>`;
+  const f=DIETS.find(x=>x.id===S.diet); if(!f) return "";
+  return `<span class="mono" style="font-size:9.5px;font-weight:700;letter-spacing:.5px;color:var(--oliveDeep);background:rgba(167,176,136,.55);padding:2px 7px;border-radius:100px;margin-left:6px;">${f.label.toUpperCase()}</span>`;
 };
 
 /* ----------------------------- SCREENS ------------------------------ */
@@ -353,6 +333,29 @@ function bigCard(d,custom){const sv=S.saved.has(d.id);return `<div class="card l
   </div>
   <div style="padding:14px 16px 16px;">${meta(d)}<div style="font-size:14.5px;line-height:1.4;margin-top:8px;font-weight:500;">${d.blurb}</div></div></div>`;}
 
+function greeting(){const g=S.answers.goal;if(g==="cook")return "Let's learn something today.";if(g==="healthier")return "Something fresh today?";if(g==="lose")return "Light and tasty today.";if(g==="others")return "Who are we feeding today?";return "Ready when you are.";}
+function companionCard(){
+  if(!S.companion.animal)return "";
+  const days=["M","T","W","T","F","S","S"];
+  const today=(new Date().getDay()+6)%7;
+  return `<div style="padding:18px 16px 0;">
+    <div class="glasspanel up" style="border-radius:24px;padding:18px 20px;display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:60px;height:60px;border-radius:100px;background:rgba(27,59,140,.12);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;font-size:34px;animation:bob 3s ease-in-out infinite;">${ANIMAL_EMOJI(S.companion.animal)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Your kitchen buddy</div>
+          <div class="display" style="font-weight:800;font-size:20px;color:var(--oliveDeep);letter-spacing:-.3px;">${S.companion.name||"Buddy"}</div>
+          <div style="font-size:13px;color:var(--inkSoft);">${greeting()}</div>
+        </div>
+        <div style="text-align:center;"><div class="mono" style="font-weight:700;font-size:24px;color:var(--flame);line-height:1;">${S.cooked.size}</div><div class="mono" style="font-size:9px;letter-spacing:1px;color:var(--inkSoft);">COOKED</div></div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        ${days.map((d,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;"><div style="width:100%;height:34px;border-radius:10px;background:${i===today?'rgba(27,59,140,.85)':'rgba(255,255,255,.4)'};border:1px solid ${i===today?'transparent':'var(--glassBorder)'};display:grid;place-items:center;color:${i===today?'#fff':'var(--inkSoft)'};">${i===today?ic("flame",{s:15,f:'#fff'}):''}</div><span class="mono" style="font-size:9px;font-weight:700;color:${i===today?'var(--flame)':'var(--inkSoft)'};">${d}</span></div>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
 function homeHTML(){
   const f=D(FEATURED_ID);
   return `<div>
@@ -361,9 +364,10 @@ function homeHTML(){
         <div><span class="eyebrow">${HANDLE}</span>
           <div class="display" style="font-weight:800;font-size:38px;letter-spacing:-1.3px;line-height:1;margin-top:6px;color:var(--oliveDeep);">${BRAND}</div>
           <div style="font-size:14px;color:var(--inkSoft);margin-top:5px;">${TAGLINE}</div></div>
-        ${S.pro?`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`:glassLogo(48)}
+        ${glassLogo(48)}
       </div>
     </div>
+    ${companionCard()}
     <div style="padding:22px 16px 0;">
       <span class="eyebrow">Dish of the week</span>
       <div class="lift up" onclick="openDish('${f.id}')" style="margin-top:12px;border-radius:24px;overflow:hidden;position:relative;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">
@@ -378,7 +382,7 @@ function homeHTML(){
 
       <div class="lift glasspanel" onclick="openScan()" style="margin-top:26px;border-radius:22px;padding:20px;display:flex;align-items:center;gap:16px;">
         <div style="width:52px;height:52px;border-radius:14px;background:rgba(27,59,140,.18);border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;flex:0 0 52px;">${ic("camera",{s:24,c:"var(--flame)"})}</div>
-        <div style="flex:1;"><div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:4px;"><span class="display" style="font-weight:700;font-size:17px;color:var(--oliveDeep);">Scan your fridge</span>${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</div>
+        <div style="flex:1;"><div class="display" style="font-weight:700;font-size:17px;color:var(--oliveDeep);margin-bottom:4px;">Scan your fridge</div>
         <div style="font-size:13.5px;color:var(--inkSoft);line-height:1.4;">Get dishes from what you've already got in.</div></div>
         ${ic("arrow-right",{s:20,c:"var(--inkSoft)"})}
       </div>
@@ -389,8 +393,6 @@ function homeHTML(){
         <div style="font-size:13.5px;color:var(--inkSoft);line-height:1.4;">Write up your own dish or technique — just for you.</div></div>
         ${ic("arrow-right",{s:20,c:"var(--inkSoft)"})}
       </div>
-
-      ${S.pro?"":`<div class="lift" onclick="goPro()" style="margin-top:14px;border-radius:22px;padding:18px 20px;background:linear-gradient(135deg,rgba(27,59,140,.88),rgba(62,99,181,.82));backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.4);color:#fff;display:flex;align-items:center;gap:14px;box-shadow:0 10px 28px rgba(27,59,140,.25);">${ic("crown",{s:26})}<div style="flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Unlock MISE Pro</div><div style="font-size:13.5px;color:rgba(255,255,255,.9);">Nutrition, macros & fridge scan — ${PRO_PRICE}/mo</div></div>${ic("arrow-right",{s:20})}</div>`}
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px;margin-bottom:12px;">
         <span class="eyebrow">Fresh from the kitchen</span>
@@ -429,7 +431,7 @@ function searchHTML(){
 function getResults(){
   const q=S.query.trim().toLowerCase();
   let r=DISHES.filter(d=>{const mq=!q||d.title.toLowerCase().includes(q)||d.blurb.toLowerCase().includes(q)||d.tag.toLowerCase().includes(q);return mq&&(S.meal==="all"||d.meal===S.meal)&&(S.flavor==="all"||d.flavor===S.flavor);});
-  if(S.diet!=="all"&&S.diet!=="omnivore"){
+  if(S.diet!=="all"){
     r=r.slice().sort((a,b)=>{const am=dishDiets(a).includes(S.diet)?0:1,bm=dishDiets(b).includes(S.diet)?0:1;return am-bm;});
   }
   return r;
@@ -456,7 +458,7 @@ function mineHTML(){
       <div><span class="eyebrow">Private to you</span><h2 class="display" style="font-weight:800;font-size:32px;margin:6px 0 0;letter-spacing:-.8px;color:var(--oliveDeep);">My recipes</h2></div>
       <button class="press" onclick="openEditor(null)" style="width:46px;height:46px;border-radius:100px;background:rgba(27,59,140,.9);border:1px solid rgba(255,255,255,.4);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 16px rgba(27,59,140,.3);">${ic("plus",{s:20,sw:2.6})}</button>
     </div>
-    ${S.customLoading?`<div style="text-align:center;padding:60px 20px;" class="mono" style="color:var(--inkSoft);font-size:13px;">Loading your recipes…</div>`:
+    ${S.customLoading?`<div style="text-align:center;padding:60px 20px;color:var(--inkSoft);font-size:13px;" class="mono">Loading your recipes…</div>`:
       list.length===0?`<div class="up glasspanel" style="margin:20px 16px;padding:40px 30px;text-align:center;border-radius:24px;"><div style="width:72px;height:72px;border-radius:100px;background:rgba(167,176,136,.3);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;margin:0 auto 18px;">${ic("chef",{s:30,c:"var(--olive)",sw:2})}</div><div class="display" style="font-weight:700;font-size:20px;color:var(--oliveDeep);">No recipes yet</div><div style="font-size:15px;color:var(--inkSoft);margin-top:8px;line-height:1.5;max-width:260px;margin-left:auto;margin-right:auto;">Write up a dish, a technique, or a family recipe. Only you can see it.</div><button class="press btn-flame" onclick="openEditor(null)" style="margin-top:20px;width:auto;padding:0 22px;">${ic("plus",{s:17,f:"#fff"})} NEW RECIPE</button></div>`
       :`<div style="display:flex;flex-direction:column;gap:18px;padding:18px 16px 24px;">${list.map(d=>bigCard(d,true)).join("")}</div>`}
   </div>`;
@@ -464,7 +466,7 @@ function mineHTML(){
 
 function aboutHTML(){
   const link=(i,l)=>`<button class="press card" style="flex:1;padding:14px 0;border-radius:16px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:7px;color:var(--ink);">${ic(i,{s:22,sw:2})}<span class="mono" style="font-size:11px;font-weight:700;letter-spacing:1px;">${l}</span></button>`;
-  const dietLabel=DIETS.find(x=>x.id===S.diet)?.label||"Everything";
+  const dietLabel=(DIETS.find(x=>x.id===S.diet)||{}).label||"Everything";
   return `<div>
     <div class="glasspanel up" style="margin:14px 16px 0;border-radius:26px;padding:26px 20px;">
       <span class="eyebrow">About</span>
@@ -472,13 +474,13 @@ function aboutHTML(){
       <p style="font-size:15px;line-height:1.55;color:var(--inkSoft);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
     </div>
     <div style="padding:20px 16px;">
-      ${S.loggedIn?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("mail",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Logged in as</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${S.userEmail}</div></div><button class="press" onclick="doLogout()" style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--flame);background:none;border:none;cursor:pointer;">LOG OUT</button></div>
-      <div class="lift glasspanel" onclick="openDietPicker()" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("salad",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Eating style</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${dietLabel}</div></div>${ic("arrow-right",{s:16,c:"var(--inkSoft)"})}</div>`:""}
-      <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      ${S.loggedIn?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("mail",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;min-width:0;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Logged in as</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;">${S.userEmail}</div></div><button class="press" onclick="doLogout()" style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--flame);background:none;border:none;cursor:pointer;">LOG OUT</button></div>
+      ${S.companion.animal?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px;"><div style="width:48px;height:48px;border-radius:100px;background:rgba(27,59,140,.12);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;font-size:26px;">${ANIMAL_EMOJI(S.companion.animal)}</div><div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Your buddy</div><div class="display" style="font-weight:700;font-size:16px;color:var(--oliveDeep);">${S.companion.name||"Buddy"}</div></div></div>`:""}
+      <div class="lift glasspanel" onclick="openDietPicker()" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;">${ic("salad",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Eating style</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${dietLabel}</div></div>${ic("arrow-right",{s:16,c:"var(--inkSoft)"})}</div>`:""}
+      <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
         <div><span class="eyebrow">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:var(--oliveDeep);line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
         ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
       </div>
-      ${S.pro?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;color:var(--oliveDeep);">${ic("crown",{s:22})}<div class="display" style="font-weight:700;font-size:16px;">You're a Pro member</div></div>`:`<button onclick="goPro()" class="press" style="width:100%;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,rgba(27,59,140,.9),rgba(62,99,181,.85));backdrop-filter:blur(10px);color:#fff;border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:24px;box-shadow:0 10px 24px rgba(27,59,140,.25);">${ic("crown",{s:22})}<div style="text-align:left;flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Go Pro</div><div style="font-size:13px;color:rgba(255,255,255,.9);">Nutrition & fridge scan · ${PRO_PRICE}/mo</div></div>${ic("arrow-right",{s:20})}</button>`}
       <span class="eyebrow">Cook along with me</span>
       <div style="display:flex;gap:12px;margin-top:12px;">${link("instagram","INSTAGRAM")}${link("youtube","YOUTUBE")}${link("heart","FOLLOW")}</div>
       <div style="text-align:center;margin-top:36px;font-family:var(--mono);font-size:11px;color:var(--inkSoft);letter-spacing:1px;">${BRAND} · ${TAGLINE.toUpperCase()}</div>
@@ -513,15 +515,14 @@ function detailHTML(d,custom){
         <div style="font-size:14.5px;line-height:1.55;color:var(--inkSoft);">${d.technique.body}</div>
       </div>`:""}
 
-      ${tiles?`<div style="position:relative;margin-bottom:28px;">
+      ${tiles?`<div style="margin-bottom:28px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;display:flex;align-items:center;gap:9px;">Nutrition ${S.pro?"":`<span class="pro-pill">${ic("crown",{s:11,sw:2.6})} PRO</span>`}</h3>
+          <h3 class="display" style="font-weight:700;font-size:22px;letter-spacing:-.3px;">Nutrition</h3>
           <span class="mono" style="font-size:10px;color:var(--inkSoft);">PER SERVING · EST.</span>
         </div>
-        <div style="display:flex;gap:10px;${S.pro?"":"filter:blur(6px);pointer-events:none;user-select:none;"}">
+        <div style="display:flex;gap:10px;">
           ${tiles.map(t=>`<div class="card" style="flex:1;padding:14px 8px;text-align:center;border-radius:16px;"><div class="mono" style="font-weight:700;font-size:20px;color:var(--olive);">${t[1]}${t[2]}</div><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;margin-top:4px;">${t[0]}</div></div>`).join("")}
         </div>
-        ${S.pro?"":`<button class="press" onclick="goPro()" style="position:absolute;inset:0;top:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:transparent;border:none;cursor:pointer;"><div style="width:42px;height:42px;border-radius:100px;background:rgba(44,54,31,.85);backdrop-filter:blur(8px);display:grid;place-items:center;">${ic("lock",{s:18,c:"var(--sage)"})}</div><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--oliveDeep);">UNLOCK WITH PRO</span></button>`}
       </div>`:""}
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -555,9 +556,8 @@ function overlayHTML(){
   if(S.cooking) h+=cookHTML(S.cookingCustom?C(S.cooking):D(S.cooking));
   if(S.showScan) h+=scanHTML();
   if(S.showEditor) h+=editorHTML();
-  if(S.onboarding) h+=onboardHTML();
-  if(S.showPro) h+=proHTML();
   if(S.showLogin) h+=loginHTML();
+  if(S.onboarding) h+=onboardHTML();
   return h;
 }
 function cookHTML(d){
@@ -700,329 +700,68 @@ function editorHTML(){
   </div>`;
 }
 
-/* ---- onboarding (diet question) ---- */
+/* ----------------------- ONBOARDING FUNNEL -------------------------- */
+function startOnboarding(){
+  S.onboarding=true;S.onboardStep=0;
+  S.answers={diet:null,goal:null,skill:null,trackHealth:null,weight:null,target:null};
+  S.companion={animal:null,name:""};
+}
+function onbWrap(inner,opts){
+  opts=opts||{};
+  const bar = opts.progress!=null?`<div style="height:5px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden;margin-bottom:24px;"><div style="height:100%;width:${Math.round(opts.progress*100)}%;background:linear-gradient(90deg,var(--flameSoft),var(--sage));transition:width .4s;"></div></div>`:"";
+  const back = opts.back?`<button class="press" onclick="onbBack()" style="position:absolute;top:24px;left:20px;width:38px;height:38px;border-radius:100px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;display:grid;place-items:center;cursor:pointer;z-index:2;">${ic("chevron-left",{s:18})}</button>`:"";
+  return `<div style="position:fixed;inset:0;z-index:80;background:radial-gradient(ellipse 90% 50% at 50% 0%,rgba(62,99,181,.4),transparent 60%),rgba(11,18,38,.97);backdrop-filter:blur(20px);color:#fff;display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding:${opts.back?"68px":"30px"} 22px 30px;">${back}<div style="flex:1;display:flex;flex-direction:column;">${bar}${inner}</div></div>`;
+}
+function onbCards(key,opts){
+  const cur=S.answers[key];
+  return opts.map(([id,label,emo])=>{const sel=cur===id;return `<button class="press" onclick="onbSet('${key}','${id}')" style="width:100%;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:16px;cursor:pointer;text-align:left;border:1px solid ${sel?'rgba(143,168,201,.95)':'rgba(255,255,255,.16)'};background:${sel?'rgba(62,99,181,.42)':'rgba(255,255,255,.06)'};color:#fff;margin-bottom:11px;">${emo?`<span style="font-size:24px;">${emo}</span>`:''}<span style="font-weight:600;font-size:16px;flex:1;">${label}</span>${sel?ic("check",{s:18,sw:3,c:'var(--sage)'}):''}</button>`;}).join("");
+}
+function onbQuestion(key,q,sub,opts,progress){
+  const cur=S.answers[key];
+  const inner=`<h1 class="display" style="font-weight:800;font-size:27px;letter-spacing:-.6px;margin-bottom:6px;">${q}</h1>${sub?`<p style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:22px;">${sub}</p>`:'<div style="height:20px;"></div>'}<div style="flex:1;">${onbCards(key,opts)}</div><button class="btn-flame press" onclick="onbNext()" style="opacity:${cur?1:.4};pointer-events:${cur?'auto':'none'};">CONTINUE ${ic("arrow-right",{s:18})}</button>`;
+  return onbWrap(inner,{progress,back:true});
+}
 function onboardHTML(){
   const step=S.onboardStep;
-  let body;
   if(step===0){
-    body=`<div class="up">
-      <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
-      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">How do you eat?</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">We'll point out dishes that fit, first.</p>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        ${DIETS.map(d=>`<button class="press" onclick="pickDiet('${d.id}')" style="text-align:left;padding:15px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between;">${d.label}${ic("arrow-right",{s:17,c:"rgba(255,255,255,.5)"})}</button>`).join("")}
-      </div>
-    </div>`;
-  } else {
-    body=`<div class="up" style="text-align:center;">
-      <div style="width:56px;height:56px;border-radius:100px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;margin:0 auto 18px;">${ic("check",{s:24,c:"var(--sage)",sw:3})}</div>
-      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;margin-bottom:8px;">You're set.</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;max-width:280px;margin:0 auto 26px;">We'll flag dishes that match how you eat. You can change this anytime in your profile.</p>
-      <button class="btn-flame press" onclick="finishOnboardToPro()">${ic("crown",{s:18})} SEE MISE PRO</button>
-      <button class="press" onclick="finishOnboard()" style="margin-top:12px;background:none;border:none;color:rgba(255,255,255,.6);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;">SKIP FOR NOW</button>
-    </div>`;
-  }
-  return `<div style="position:fixed;inset:0;z-index:78;display:flex;flex-direction:column;justify-content:center;background:rgba(15,24,48,.96);backdrop-filter:blur(10px);padding:24px;">
-    <div style="max-width:380px;margin:0 auto;width:100%;">${body}</div>
-  </div>`;
-}
-function pickDiet(id){S.onboardDiet=id;S.onboardStep=1;render();
-  if(supa&&S.loggedIn){supa.auth.getUser().then(({data})=>{const u=data&&data.user;if(u){supa.from("profiles").update({diet:id}).eq("id",u.id).then(()=>{});}});}
-  S.diet=id;
-}
-function finishOnboard(){S.onboarding=false;render();}
-function finishOnboardToPro(){S.onboarding=false;S.showPro=true;render();}
-
-function proHTML(){
-  const perks=[["zap","Calories & macros","Per-serving nutrition on every dish."],["camera","Scan your fridge","Snap what you've got, get dishes you can make now."],["sparkles","Portion scaling","Macros that follow your serving size."]];
-  return `<div onclick="closePro()" style="position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,18,14,.45);backdrop-filter:blur(4px);">
-    <div class="sheet" onclick="event.stopPropagation()" style="background:rgba(44,54,31,.92);backdrop-filter:blur(24px) saturate(160%);border-radius:28px 28px 0 0;padding:26px 22px 30px;color:#fff;max-width:480px;margin:0 auto;width:100%;border:1px solid rgba(255,255,255,.15);border-bottom:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="display:inline-flex;align-items:center;gap:8px;">${ic("crown",{s:18,c:"var(--sage)"})}<span class="eyebrow">${BRAND} Pro</span></div><button class="press" onclick="closePro()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button></div>
-      <h2 class="display" style="font-weight:800;font-size:28px;letter-spacing:-.6px;line-height:1.05;margin:4px 0 18px;">Cook smarter, not just tastier.</h2>
-      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">${perks.map(p=>`<div style="display:flex;gap:14px;align-items:flex-start;"><div style="width:40px;height:40px;border-radius:12px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.15);display:grid;place-items:center;flex:0 0 40px;">${ic(p[0],{s:19,c:"var(--sage)"})}</div><div><div style="font-weight:700;font-size:15.5px;">${p[1]}</div><div style="font-size:13.5px;color:rgba(255,255,255,.7);line-height:1.4;">${p[2]}</div></div></div>`).join("")}</div>
-      <button class="btn-flame press" onclick="unlockPro()">Go Pro · ${PRO_PRICE}/mo</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">SECURE CHECKOUT · POWERED BY STRIPE</div>
+    const inner=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+      ${glassLogo(78)}
+      <h1 class="display" style="font-weight:800;font-size:34px;letter-spacing:-1px;margin:22px 0 10px;">Welcome to ${BRAND}</h1>
+      <p style="font-size:16px;color:rgba(255,255,255,.75);line-height:1.5;max-width:300px;">Answer a few quick things and we'll build your kitchen around you. Takes about 30 seconds.</p>
     </div>
-  </div>`;
-}
-
-function loginHTML(){
-  let body="";
-  if(S.authSent){
-    body=`<div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
-      <div style="width:56px;height:56px;border-radius:100px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;margin-bottom:18px;">${ic("mail",{s:24,c:"var(--sage)"})}</div>
-      <h2 class="display" style="font-weight:800;font-size:22px;letter-spacing:-.4px;margin-bottom:8px;">Check your email</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;max-width:280px;margin:0 auto 22px;">We sent a sign-in link to <strong style="color:#fff;">${S.userEmail}</strong>. Tap it on this device to come back here, logged in.</p>
-      <button class="press" onclick="closeLogin()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;padding:12px 22px;border-radius:100px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;">DONE</button>
-    </div>`;
-  } else {
-    body=`<div>
-      <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
-      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, your own recipes, and cooking mode are for logged-in cooks only.</p>
-      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:10px;">
-        ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
-        <input id="loginEmail" type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
-      </div>
-      ${S.authError?`<div class="mono" style="font-size:11.5px;color:#F0815A;margin-bottom:10px;">${S.authError}</div>`:""}
-      <button class="btn-flame press" onclick="sendMagicLink()" ${S.authBusy?"disabled":""}>${ic("lock",{s:18})} ${S.authBusy?"SENDING…":"SEND SIGN-IN LINK"}</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:14px;">NO PASSWORD NEEDED — JUST A LINK IN YOUR INBOX</div>
-    </div>`;
+    <button class="btn-flame press" onclick="onbNext()">GET STARTED ${ic("arrow-right",{s:18})}</button>`;
+    return onbWrap(inner,{});
   }
-  return `<div onclick="closeLogin()" style="position:fixed;inset:0;z-index:75;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(15,24,48,.45);backdrop-filter:blur(4px);">
-    <div class="sheet" onclick="event.stopPropagation()" style="background:rgba(15,24,48,.92);backdrop-filter:blur(24px) saturate(160%);border-radius:28px 28px 0 0;padding:26px 22px 30px;color:#fff;max-width:480px;margin:0 auto;width:100%;border:1px solid rgba(255,255,255,.15);border-bottom:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-        <div style="display:inline-flex;align-items:center;gap:8px;">${ic("lock",{s:18,c:"var(--sage)"})}<span class="eyebrow">Log in</span></div>
-        <button class="press" onclick="closeLogin()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button>
+  if(step===1) return onbQuestion("diet","How do you eat?","We'll surface dishes that fit you first.",[["all","Everything","🍽️"],["vegetarian","Vegetarian","🥕"],["pescatarian","Pescatarian","🐟"],["vegan","Vegan","🌱"]],0.12);
+  if(step===2) return onbQuestion("goal","What do you want most?","",[["cook","Learn to cook properly","👨‍🍳"],["healthier","Eat healthier","🥗"],["lose","Lose a bit of weight","📉"],["others","Cook for people I love","🍷"]],0.26);
+  if(step===3) return onbQuestion("skill","How are you in the kitchen?","",[["new","Just starting out","🐣"],["some","I can get by","🔪"],["confident","Pretty confident","🔥"]],0.40);
+  if(step===4){
+    const inner=`<div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+      <span class="mono" style="font-size:11px;letter-spacing:2px;color:var(--sage);font-weight:700;">WHY IT WORKS</span>
+      <h1 class="display" style="font-weight:800;font-size:27px;letter-spacing:-.6px;margin:8px 0 24px;">Guided cooks stick with it</h1>
+      <div style="display:flex;align-items:flex-end;gap:24px;height:190px;margin-bottom:16px;">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;height:100%;justify-content:flex-end;">
+          <div style="width:100%;height:32%;background:rgba(255,255,255,.16);border-radius:14px 14px 0 0;"></div>
+          <span class="mono" style="font-size:11px;color:rgba(255,255,255,.6);text-align:center;">On your<br/>own</span>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;height:100%;justify-content:flex-end;">
+          <div style="width:100%;height:100%;background:linear-gradient(180deg,var(--flameSoft),var(--flame));border-radius:14px 14px 0 0;box-shadow:0 0 32px rgba(62,99,181,.55);position:relative;">
+            <span class="mono" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);font-size:14px;font-weight:700;">3×</span>
+          </div>
+          <span class="mono" style="font-size:11px;color:#fff;font-weight:700;text-align:center;">With<br/>${BRAND}</span>
+        </div>
       </div>
-      ${body}
+      <p style="font-size:12.5px;color:rgba(255,255,255,.45);line-height:1.5;">Illustrative — based on how step-by-step, guided learning compares to figuring it out alone.</p>
     </div>
-  </div>`;
-}
-
-/* ------------------------------- NAV -------------------------------- */
-function navHTML(){
-  const items=[["home","home","HOME"],["search","search","BROWSE"],["mine","chef","MINE"],["saved","bookmark","SAVED"],["about","user","ME"]];
-  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId&&!S.openCustom;const badge=(id==="saved"&&S.saved.size)?`<span class="navbadge">${S.saved.size}</span>`:(id==="mine"&&S.customRecipes.length?`<span class="navbadge">${S.customRecipes.length}</span>`:"");return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&(id==="saved")?"var(--oliveDeep)":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}${badge}</button>`;}).join("")}</div>`;
-}
-
-/* ----------------------------- ACTIONS ------------------------------ */
-function render(){
-  document.getElementById("screen").innerHTML=screenHTML();
-  document.getElementById("nav").innerHTML=navHTML();
-  document.getElementById("overlay").innerHTML=overlayHTML();
-  if(S.cooking) mountTimer();
-}
-function nav(){render();window.scrollTo(0,0);}
-function setTab(t){if((t==="saved"||t==="mine")&&!ensureLogin())return;S.openId=null;S.openCustom=null;S.tab=t;nav();}
-function openDish(id){S.openId=id;S.openCustom=null;S.servings=null;nav();}
-function openCustomDish(id){if(!ensureLogin())return;S.openCustom=id;S.openId=null;S.servings=null;nav();}
-function back(){S.openId=null;S.openCustom=null;nav();}
-function toggleSave(id){if(!ensureLogin())return;S.saved.has(id)?S.saved.delete(id):S.saved.add(id);render();}
-function markCooked(id){if(!ensureLogin())return;S.cooked.has(id)?S.cooked.delete(id):S.cooked.add(id);render();}
-function setServings(v){S.servings=Math.max(1,v);render();}
-function goPro(){if(!ensureLogin())return;S.showPro=true;render();}
-function closePro(){S.showPro=false;render();}
-function unlockPro(){
-  if(!PRO_PAYMENT_LINK){appToast("Add your Stripe link to PRO_PAYMENT_LINK");return;}
-  let url=PRO_PAYMENT_LINK;
-  const params=[];
-  if(S.userEmail) params.push("prefilled_email="+encodeURIComponent(S.userEmail));
-  if(supa){
-    supa.auth.getUser().then(({data})=>{
-      const uid=data&&data.user?data.user.id:null;
-      if(uid) params.push("client_reference_id="+encodeURIComponent(uid));
-      window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):"");
-    }).catch(()=>{ window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):""); });
-  } else {
-    window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):"");
+    <button class="btn-flame press" onclick="onbNext()">MAKES SENSE ${ic("arrow-right",{s:18})}</button>`;
+    return onbWrap(inner,{progress:0.52,back:true});
   }
-}
-function openScan(){if(!ensureLogin())return;if(S.pro){S.showScan=true;S.scanPhase="intro";render();}else goPro();}
-function closeScan(){S.showScan=false;render();}
-function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;S.authSent=false;S.authError="";render();return false;}
-function closeLogin(){S.showLogin=false;render();}
-function openDietPicker(){S.onboarding=true;S.onboardStep=0;render();}
-
-/* ---- real Supabase magic-link auth ---- */
-function sendMagicLink(){
-  const input=document.getElementById("loginEmail");
-  const email=input?input.value.trim():"";
-  S.authError="";
-  if(!email||!email.includes("@")){S.authError="Enter a valid email.";render();return;}
-  if(!supa){S.authError="Auth isn't configured yet — missing Supabase keys.";render();return;}
-  S.authBusy=true;render();
-  supa.auth.signInWithOtp({
-    email,
-    options:{emailRedirectTo:window.location.origin+window.location.pathname}
-  }).then(({error})=>{
-    S.authBusy=false;
-    if(error){S.authError=error.message;render();return;}
-    S.userEmail=email;S.authSent=true;render();
-  }).catch(err=>{S.authBusy=false;S.authError=String(err);render();});
-}
-function doLogout(){
-  if(supa) supa.auth.signOut();
-  S.loggedIn=false;S.pro=false;S.userEmail="";S.tab="home";S.openId=null;S.openCustom=null;S.customRecipes=[];S.diet="all";
-  render();
-}
-
-/* fetch or create a profile row for the signed-in user, and read is_pro + diet.
-   Also detects brand-new users (no row yet) to trigger onboarding. */
-async function syncProfile(user){
-  if(!supa||!user) return;
-  let isNewUser=false;
-  try{
-    let {data:profile,error}=await supa.from("profiles").select("*").eq("id",user.id).maybeSingle();
-    if(!profile){
-      const ins=await supa.from("profiles").insert({id:user.id,email:user.email,is_pro:false,diet:"all"}).select().maybeSingle();
-      profile=ins.data;
-      isNewUser=true;
-    }
-    S.pro=!!(profile&&profile.is_pro);
-    S.diet=(profile&&profile.diet)||"all";
-  }catch(e){ /* table may not exist yet — fail quietly, app still works without persistence */ }
-  await loadCustomRecipes(user);
-  if(isNewUser){S.onboarding=true;S.onboardStep=0;}
-  render();
-}
-
-async function loadCustomRecipes(user){
-  if(!supa||!user)return;
-  S.customLoading=true;
-  try{
-    const {data,error}=await supa.from("custom_recipes").select("*").eq("user_id",user.id).order("created_at",{ascending:false});
-    if(!error&&data){
-      S.customRecipes=data.map(r=>({
-        id:r.id,title:r.title,blurb:r.blurb,meal:r.meal,flavor:r.flavor,minutes:r.minutes,level:r.level,
-        base:r.base_servings,tag:"Mine",hue:["#1B2A4A","#3E63B5"],
-        technique:{title:r.technique_title||"",body:r.technique_body||""},
-        ingredients:r.ingredients||[], steps:r.steps||[]
-      }));
-    }
-  }catch(e){}
-  S.customLoading=false;
-}
-
-async function saveCustom(){
-  if(!supa||!S.loggedIn){appToast("Log in to save recipes");return;}
-  const d=S.editorDraft;
-  if(!d.title||!d.title.trim()){appToast("Give your recipe a title");return;}
-  S.editorSaving=true;render();
-  try{
-    const {data:{user}}=await supa.auth.getUser();
-    const row={
-      user_id:user.id,title:d.title.trim(),blurb:d.blurb||"",meal:d.meal,flavor:d.flavor,
-      minutes:d.minutes||20,level:d.level||"Easy",base_servings:d.base_servings||4,
-      technique_title:d.technique_title||"",technique_body:d.technique_body||"",
-      ingredients:(d.ingredients||[]).filter(g=>g.name&&g.name.trim()),
-      steps:(d.steps||[]).filter(s=>s.text&&s.text.trim()),
-    };
-    let res;
-    if(S.editorId){
-      res=await supa.from("custom_recipes").update(row).eq("id",S.editorId).select().maybeSingle();
-    } else {
-      res=await supa.from("custom_recipes").insert(row).select().maybeSingle();
-    }
-    if(res.error){appToast("Couldn't save — "+res.error.message);S.editorSaving=false;render();return;}
-    await loadCustomRecipes(user);
-    S.editorSaving=false;S.showEditor=false;S.editorId=null;S.editorDraft=null;
-    S.tab="mine";S.openId=null;S.openCustom=null;
-    appToast("Recipe saved");
-    nav();
-  }catch(e){S.editorSaving=false;appToast("Something went wrong saving");render();}
-}
-
-async function deleteCustom(id){
-  if(!supa){return;}
-  try{
-    await supa.from("custom_recipes").delete().eq("id",id);
-    const {data:{user}}=await supa.auth.getUser();
-    await loadCustomRecipes(user);
-    S.openCustom=null;S.tab="mine";
-    appToast("Recipe deleted");
-    nav();
-  }catch(e){appToast("Couldn't delete");render();}
-}
-
-/* called once on load: wires up Supabase auth state + checks for a Stripe success redirect */
-async function initAuth(){
-  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||typeof window.supabase==="undefined"){
-    render();
-    return;
-  }
-  supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
-  supa.auth.onAuthStateChange((event,session)=>{
-    if(session&&session.user){
-      S.loggedIn=true;S.userEmail=session.user.email;S.showLogin=false;S.authSent=false;
-      syncProfile(session.user);
-    } else if(event==="SIGNED_OUT"){
-      S.loggedIn=false;S.pro=false;S.userEmail="";S.customRecipes=[];S.diet="all";
-      render();
-    }
-  });
-
-  const {data:{session}}=await supa.auth.getSession();
-  if(session&&session.user){
-    S.loggedIn=true;S.userEmail=session.user.email;
-    await syncProfile(session.user);
-  }
-
-  /* Stripe Payment Link can redirect back here with ?pro=success after a real payment.
-     Configure this in Stripe: Payment Link -> After payment -> redirect to your site URL + "?pro=success".
-     NOTE: this client-side flag is a convenience for immediate UI feedback. For Pro status that can't be
-     spoofed by editing the URL, set up a Stripe webhook -> Supabase Edge Function that flips is_pro
-     server-side using the client_reference_id we attach to the checkout link in unlockPro(). */
-  const params=new URLSearchParams(window.location.search);
-  if(params.get("pro")==="success"){
-    if(S.loggedIn){
-      const {data:{user}}=await supa.auth.getUser();
-      if(user){
-        await supa.from("profiles").update({is_pro:true}).eq("id",user.id);
-        S.pro=true;
-        appToast("🎉 Welcome to MISE Pro!");
-      }
-    }
-    params.delete("pro");
-    const clean=window.location.pathname+(params.toString()?"?"+params.toString():"");
-    window.history.replaceState({},"",clean);
-  }
-
-  render();
-}
-
-function scanGo(){S.scanPhase="scanning";render();setTimeout(()=>{S.scanPhase="results";render();},1700);}
-function toggleFound(k){S.found[k]=!S.found[k];render();}
-function openFromScan(id){S.showScan=false;S.openId=id;S.servings=null;nav();}
-function goCategory(m){S.meal=m;S.flavor="all";S.query="";S.tab="search";S.openId=null;nav();}
-function setMeal(m){S.meal=m;render();}
-function setFlavor(f){S.flavor=f;render();}
-function clearSearch(){S.query="";render();}
-function onSearch(v){S.query=v;document.getElementById("results").innerHTML=resultsHTML();}
-function startCook(id,custom){if(!ensureLogin())return;S.cooking=id;S.cookingCustom=!!custom;S.cookStep=0;render();}
-function exitCook(){clearInterval(T.id);S.cooking=null;render();}
-function cookNext(){clearInterval(T.id);S.cookStep++;render();}
-function cookPrev(){clearInterval(T.id);S.cookStep--;render();}
-
-/* TIMER */
-function mountTimer(){
-  const d=S.cookingCustom?C(S.cooking):D(S.cooking),step=d.steps[S.cookStep];
-  if(!step||step.timer<=0)return;
-  clearInterval(T.id);T.total=step.timer;T.left=step.timer;T.running=false;T.done=false;
-  paintTimer();
-}
-function paintTimer(){
-  const dg=document.getElementById("t-digits"),ring=document.getElementById("t-ring"),btn=document.getElementById("t-btn");
-  if(!dg)return;
-  const R=52,CIRC=2*Math.PI*R,pct=T.total?T.left/T.total:0;
-  dg.textContent=T.done?"DONE":fmt(T.left);
-  dg.style.color=T.done?"var(--sage)":"#fff";
-  dg.style.animation=T.done?"pulse 1s infinite":"none";
-  ring.setAttribute("stroke",T.done?"var(--sage)":"var(--flame)");
-  ring.setAttribute("stroke-dashoffset",CIRC*(1-pct));
-  btn.innerHTML=T.running?`${ic("pause",{s:15})} PAUSE`:`${ic("play",{s:15,f:"#fff"})} ${T.done?"AGAIN":"START"}`;
-}
-function toggleTimer(){
-  if(T.done){T.left=T.total;T.done=false;}
-  T.running=!T.running;
-  clearInterval(T.id);
-  if(T.running){T.id=setInterval(()=>{T.left--;if(T.left<=0){T.left=0;T.running=false;T.done=true;clearInterval(T.id);beep();try{navigator.vibrate&&navigator.vibrate(400);}catch(e){}}paintTimer();},1000);}
-  paintTimer();
-}
-function resetTimer(){clearInterval(T.id);T.left=T.total;T.running=false;T.done=false;paintTimer();}
-
-/* TOAST */
-let toastT;
-function appToast(msg){const t=document.getElementById("toast");t.textContent=msg||"🚀 Launching soon — follow for the drop";t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
-
-/* MARQUEE build (duplicate for seamless loop) */
-(function(){
-  const msg=`📱 Download the ${BRAND} app — cook along with every video  •  new dish every week  •  ${HANDLE}  •  `;
-  document.getElementById("mq").innerHTML=`<span>${msg}</span><span>${msg}</span>`;
-})();
-
-initAuth();
+  if(step===5){
+    const t=S.answers.trackHealth;
+    const inner=`<h1 class="display" style="font-weight:800;font-size:27px;letter-spacing:-.6px;margin-bottom:6px;">Any health goals?</h1>
+    <p style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:22px;">Optional — ${BRAND} is cooking-first. Skip if you like.</p>
+    <div style="display:flex;gap:12px;margin-bottom:18px;">
+      <button class="press" onclick="onbHealth(true)" style="flex:1;padding:16px;border-radius:16px;cursor:pointer;border:1px solid ${t===true?'rgba(143,168,201,.95)':'rgba(255,255,255,.16)'};background:${t===true?'rgba(62,99,181,.42)':'rgba(255,255,255,.06)'};color:#fff;fofnt-
 </script>
 </body>
 </html>
