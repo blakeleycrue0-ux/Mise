@@ -44,7 +44,6 @@
   .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   input{font-family:inherit;}
 
-  /* ambient floating blobs, fixed behind the app frame for glass to refract */
   .blob{position:fixed;border-radius:50%;filter:blur(60px);z-index:0;pointer-events:none;opacity:.55;}
   .blob1{width:340px;height:340px;top:-80px;left:-100px;background:radial-gradient(circle,var(--flameSoft),transparent 70%);animation:drift1 22s ease-in-out infinite;}
   .blob2{width:300px;height:300px;top:30%;right:-120px;background:radial-gradient(circle,var(--olive),transparent 70%);animation:drift2 26s ease-in-out infinite;}
@@ -55,7 +54,6 @@
   @keyframes drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
   @media(prefers-reduced-motion:reduce){.blob{animation:none!important;}}
 
-  /* MARQUEE — frosted strip */
   .marquee{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.45);backdrop-filter:blur(var(--blur)) saturate(160%);-webkit-backdrop-filter:blur(var(--blur)) saturate(160%);color:var(--ink);display:flex;align-items:center;height:38px;overflow:hidden;border-bottom:1px solid var(--glassBorder);box-shadow:0 1px 0 rgba(255,255,255,.5) inset;}
   .marquee-track{display:inline-flex;white-space:nowrap;animation:scroll 26s linear infinite;flex:1;}
   .marquee-track span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;padding-right:40px;display:inline-flex;align-items:center;gap:8px;color:var(--inkSoft);}
@@ -68,7 +66,6 @@
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--flame);font-weight:700;}
   .mono{font-family:var(--mono);} .display{font-family:var(--display);}
 
-  /* GLASS CARD — the core surface */
   .card{
     background:var(--glass);
     backdrop-filter:blur(var(--blur)) saturate(160%);
@@ -106,8 +103,8 @@
   .chip.active{border-color:rgba(60,74,44,.5);background:rgba(60,74,44,.85);backdrop-filter:blur(10px);color:#fff;}
 
   .btn-flame{height:56px;border-radius:18px;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,var(--flame),var(--flameSoft));color:#fff;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 28px rgba(27,59,140,.35), inset 0 1px 0 rgba(255,255,255,.5);width:100%;}
+  .btn-flame:disabled{opacity:.55;cursor:default;}
 
-  /* FLOATING GLASS NAV CAPSULE */
   .nav{
     position:fixed;bottom:16px;left:16px;right:16px;max-width:448px;margin:0 auto;
     background:rgba(255,255,255,.55);
@@ -124,10 +121,9 @@
   .navdot{width:5px;height:5px;border-radius:100px;background:var(--flame);margin-top:1px;}
   .navbadge{position:absolute;top:2px;right:50%;transform:translateX(18px);min-width:16px;height:16px;padding:0 4px;border-radius:100px;background:var(--flame);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.6);}
 
-  .toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);background:rgba(44,54,31,.85);backdrop-filter:blur(14px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:90;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;border:1px solid rgba(255,255,255,.2);}
+  .toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);background:rgba(44,54,31,.85);backdrop-filter:blur(14px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:90;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;border:1px solid rgba(255,255,255,.2);max-width:86%;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 
-  /* glass sheen overlay used on hero/cover panels */
   .sheen{position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.18) 100%);pointer-events:none;}
 </style>
 </head>
@@ -150,12 +146,21 @@
 <div id="overlay"></div>
 <div class="toast" id="toast"></div>
 
+<!-- Supabase client (loaded before our app script) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
 <script>
 /* ------------------------------- DATA ------------------------------- */
 const BRAND="MISE", TAGLINE="everything in its place", HANDLE="@mise.cooks", PRO_PRICE="€3.99";
 
 /* ===== STRIPE ===== paste your Stripe Payment Link between the quotes (https://buy.stripe.com/...) */
 const PRO_PAYMENT_LINK="https://buy.stripe.com/4gM28rcdg88c6U21vX1Jm01";
+
+/* ===== SUPABASE ===== paste your Project URL and anon public key between the quotes.
+   Find them in your Supabase dashboard: Project Settings -> API.
+   The anon key is safe to use in client-side code (it's the "public" key, not the service_role secret). */
+const SUPABASE_URL="";
+const SUPABASE_ANON_KEY="";
 
 const MEALS=[
   {id:"breakfast",label:"Breakfast",icon:"coffee"},
@@ -205,8 +210,9 @@ const DISHES=[
 const FEATURED_ID="pa-amb-oli";
 
 /* ------------------------------ STATE ------------------------------- */
-const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
+const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,authBusy:false,authSent:false,authError:"",userEmail:"",scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
 let T={id:null,total:0,left:0,running:false,done:false};
+let supa=null;
 
 /* ----------------------------- HELPERS ------------------------------ */
 const ICONS={
@@ -248,7 +254,6 @@ const fmt=(s)=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 const D=(id)=>DISHES.find(d=>d.id===id);
 function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type="sine";o.frequency.value=880;g.gain.setValueAtTime(.001,c.currentTime);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.5);o.start();o.stop(c.currentTime+.5);}catch(e){}}
 
-/* glass logo badge — frosted disc, gradient flame, glass highlight streak */
 function glassLogo(size){
   const s=size||44;
   return `<div style="position:relative;width:${s}px;height:${s}px;border-radius:100px;background:rgba(255,255,255,.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);box-shadow:0 6px 18px rgba(27,59,140,.25), inset 0 1px 0 rgba(255,255,255,.8);display:grid;place-items:center;overflow:hidden;">
@@ -261,7 +266,6 @@ function glassLogo(size){
   </div>`;
 }
 
-/* auto food photo per dish (AI-generated via URL — swap any dish to a real photo by adding img:"..." to it) */
 const imgFor=(d)=>`https://image.pollinations.ai/prompt/${encodeURIComponent(d.title+", appetizing food photography, natural light, close up"+(d.flavor==="sweet"?", dessert":""))}?width=800&height=600&nologo=true&seed=${d.id.length*7}`;
 
 const cover=(d,h,r,fs)=>{
@@ -385,6 +389,7 @@ function aboutHTML(){
       <p style="font-size:15px;line-height:1.55;color:var(--inkSoft);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
     </div>
     <div style="padding:20px 16px;">
+      ${S.loggedIn?`<div class="glasspanel" style="border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;">${ic("mail",{s:18,c:"var(--inkSoft)"})}<div style="flex:1;"><div class="mono" style="font-size:10px;letter-spacing:1px;color:var(--inkSoft);text-transform:uppercase;">Logged in as</div><div style="font-weight:600;font-size:14.5px;color:var(--ink);">${S.userEmail}</div></div><button class="press" onclick="doLogout()" style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--flame);background:none;border:none;cursor:pointer;">LOG OUT</button></div>`:""}
       <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div><span class="eyebrow">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:var(--oliveDeep);line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
         ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
@@ -539,21 +544,35 @@ function proHTML(){
 }
 
 function loginHTML(){
+  let body="";
+  if(S.authSent){
+    body=`<div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <div style="width:56px;height:56px;border-radius:100px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;margin-bottom:18px;">${ic("mail",{s:24,c:"var(--sage)"})}</div>
+      <h2 class="display" style="font-weight:800;font-size:22px;letter-spacing:-.4px;margin-bottom:8px;">Check your email</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;max-width:280px;margin:0 auto 22px;">We sent a sign-in link to <strong style="color:#fff;">${S.userEmail}</strong>. Tap it on this device to come back here, logged in.</p>
+      <button class="press" onclick="closeLogin()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;padding:12px 22px;border-radius:100px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;">DONE</button>
+    </div>`;
+  } else {
+    body=`<div>
+      <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
+      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, marking what you've cooked, and cooking mode are for logged-in cooks only.</p>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:10px;">
+        ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
+        <input id="loginEmail" type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
+      </div>
+      ${S.authError?`<div class="mono" style="font-size:11.5px;color:#F0815A;margin-bottom:10px;">${S.authError}</div>`:""}
+      <button class="btn-flame press" onclick="sendMagicLink()" ${S.authBusy?"disabled":""}>${ic("lock",{s:18})} ${S.authBusy?"SENDING…":"SEND SIGN-IN LINK"}</button>
+      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:14px;">NO PASSWORD NEEDED — JUST A LINK IN YOUR INBOX</div>
+    </div>`;
+  }
   return `<div onclick="closeLogin()" style="position:fixed;inset:0;z-index:75;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(15,24,48,.45);backdrop-filter:blur(4px);">
     <div class="sheet" onclick="event.stopPropagation()" style="background:rgba(15,24,48,.92);backdrop-filter:blur(24px) saturate(160%);border-radius:28px 28px 0 0;padding:26px 22px 30px;color:#fff;max-width:480px;margin:0 auto;width:100%;border:1px solid rgba(255,255,255,.15);border-bottom:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
         <div style="display:inline-flex;align-items:center;gap:8px;">${ic("lock",{s:18,c:"var(--sage)"})}<span class="eyebrow">Log in</span></div>
         <button class="press" onclick="closeLogin()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:32px;height:32px;border-radius:100px;display:grid;place-items:center;cursor:pointer;">${ic("x",{s:16})}</button>
       </div>
-      <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
-      <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, marking what you've cooked, and cooking mode are for logged-in cooks only.</p>
-      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:14px;">
-        ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
-        <input type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
-      </div>
-      <button class="btn-flame press" onclick="doLogin()">${ic("lock",{s:18})} CONTINUE</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:14px;">DEMO — LOGS YOU IN INSTANTLY HERE</div>
+      ${body}
     </div>
   </div>`;
 }
@@ -580,12 +599,110 @@ function markCooked(id){if(!ensureLogin())return;S.cooked.has(id)?S.cooked.delet
 function setServings(v){S.servings=Math.max(1,v);render();}
 function goPro(){if(!ensureLogin())return;S.showPro=true;render();}
 function closePro(){S.showPro=false;render();}
-function unlockPro(){ if(PRO_PAYMENT_LINK){ window.location.href=PRO_PAYMENT_LINK; } else { appToast("Add your Stripe link to PRO_PAYMENT_LINK"); } }
+function unlockPro(){
+  if(!PRO_PAYMENT_LINK){appToast("Add your Stripe link to PRO_PAYMENT_LINK");return;}
+  let url=PRO_PAYMENT_LINK;
+  const params=[];
+  if(S.userEmail) params.push("prefilled_email="+encodeURIComponent(S.userEmail));
+  if(supa){
+    supa.auth.getUser().then(({data})=>{
+      const uid=data&&data.user?data.user.id:null;
+      if(uid) params.push("client_reference_id="+encodeURIComponent(uid));
+      window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):"");
+    }).catch(()=>{ window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):""); });
+  } else {
+    window.location.href=url+(params.length?(url.includes("?")?"&":"?")+params.join("&"):"");
+  }
+}
 function openScan(){if(!ensureLogin())return;if(S.pro){S.showScan=true;S.scanPhase="intro";render();}else goPro();}
 function closeScan(){S.showScan=false;render();}
-function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;render();return false;}
+function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;S.authSent=false;S.authError="";render();return false;}
 function closeLogin(){S.showLogin=false;render();}
-function doLogin(){S.loggedIn=true;S.showLogin=false;render();}
+
+/* ---- real Supabase magic-link auth ---- */
+function sendMagicLink(){
+  const input=document.getElementById("loginEmail");
+  const email=input?input.value.trim():"";
+  S.authError="";
+  if(!email||!email.includes("@")){S.authError="Enter a valid email.";render();return;}
+  if(!supa){S.authError="Auth isn't configured yet — missing Supabase keys.";render();return;}
+  S.authBusy=true;render();
+  supa.auth.signInWithOtp({
+    email,
+    options:{emailRedirectTo:window.location.origin+window.location.pathname}
+  }).then(({error})=>{
+    S.authBusy=false;
+    if(error){S.authError=error.message;render();return;}
+    S.userEmail=email;S.authSent=true;render();
+  }).catch(err=>{S.authBusy=false;S.authError=String(err);render();});
+}
+function doLogout(){
+  if(supa) supa.auth.signOut();
+  S.loggedIn=false;S.pro=false;S.userEmail="";S.tab="home";S.openId=null;
+  render();
+}
+
+/* fetch or create a profile row for the signed-in user, and read is_pro */
+async function syncProfile(user){
+  if(!supa||!user) return;
+  try{
+    let {data:profile,error}=await supa.from("profiles").select("*").eq("id",user.id).maybeSingle();
+    if(!profile){
+      const ins=await supa.from("profiles").insert({id:user.id,email:user.email,is_pro:false}).select().maybeSingle();
+      profile=ins.data;
+    }
+    S.pro=!!(profile&&profile.is_pro);
+  }catch(e){ /* table may not exist yet — fail quietly, app still works without Pro persistence */ }
+  render();
+}
+
+/* called once on load: wires up Supabase auth state + checks for a Stripe success redirect */
+async function initAuth(){
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY||typeof window.supabase==="undefined"){
+    render();
+    return;
+  }
+  supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  supa.auth.onAuthStateChange((event,session)=>{
+    if(session&&session.user){
+      S.loggedIn=true;S.userEmail=session.user.email;S.showLogin=false;S.authSent=false;
+      syncProfile(session.user);
+    } else if(event==="SIGNED_OUT"){
+      S.loggedIn=false;S.pro=false;S.userEmail="";
+      render();
+    }
+  });
+
+  const {data:{session}}=await supa.auth.getSession();
+  if(session&&session.user){
+    S.loggedIn=true;S.userEmail=session.user.email;
+    await syncProfile(session.user);
+  }
+
+  /* Stripe Payment Link can redirect back here with ?pro=success after a real payment.
+     Configure this in Stripe: Payment Link -> After payment -> redirect to your site URL + "?pro=success".
+     NOTE: this client-side flag is a convenience for immediate UI feedback. For Pro status that can't be
+     spoofed by editing the URL, set up a Stripe webhook -> Supabase Edge Function that flips is_pro
+     server-side using the client_reference_id we attach to the checkout link in unlockPro(). */
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("pro")==="success"){
+    if(S.loggedIn){
+      const {data:{user}}=await supa.auth.getUser();
+      if(user){
+        await supa.from("profiles").update({is_pro:true}).eq("id",user.id);
+        S.pro=true;
+        appToast("🎉 Welcome to MISE Pro!");
+      }
+    }
+    params.delete("pro");
+    const clean=window.location.pathname+(params.toString()?"?"+params.toString():"");
+    window.history.replaceState({},"",clean);
+  }
+
+  render();
+}
+
 function scanGo(){S.scanPhase="scanning";render();setTimeout(()=>{S.scanPhase="results";render();},1700);}
 function toggleFound(k){S.found[k]=!S.found[k];render();}
 function openFromScan(id){S.showScan=false;S.openId=id;S.servings=null;nav();}
@@ -636,8 +753,7 @@ function appToast(msg){const t=document.getElementById("toast");t.textContent=ms
   document.getElementById("mq").innerHTML=`<span>${msg}</span><span>${msg}</span>`;
 })();
 
-render();
+initAuth();
 </script>
 </body>
 </html>
-
