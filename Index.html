@@ -9,7 +9,6 @@
 <link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MISE">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
@@ -119,10 +118,11 @@
     box-shadow:0 14px 34px rgba(43,38,32,.18), inset 0 1px 0 rgba(255,255,255,.7);
     z-index:30;
   }
-  .navbtn{flex:1;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--inkSoft);padding:6px 0;border-radius:18px;}
+  .navbtn{flex:1;background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--inkSoft);padding:6px 0;border-radius:18px;position:relative;}
   .navbtn.active{color:var(--oliveDeep);background:rgba(255,255,255,.6);}
   .navbtn span{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1px;}
   .navdot{width:5px;height:5px;border-radius:100px;background:var(--flame);margin-top:1px;}
+  .navbadge{position:absolute;top:2px;right:50%;transform:translateX(18px);min-width:16px;height:16px;padding:0 4px;border-radius:100px;background:var(--flame);color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.6);}
 
   .toast{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);background:rgba(44,54,31,.85);backdrop-filter:blur(14px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;padding:12px 18px;border-radius:100px;z-index:90;opacity:0;transition:opacity .3s, transform .3s;pointer-events:none;border:1px solid rgba(255,255,255,.2);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
@@ -153,6 +153,10 @@
 <script>
 /* ------------------------------- DATA ------------------------------- */
 const BRAND="MISE", TAGLINE="everything in its place", HANDLE="@mise.cooks", PRO_PRICE="€3.99";
+
+/* ===== STRIPE ===== paste your Stripe Payment Link between the quotes (https://buy.stripe.com/...) */
+const PRO_PAYMENT_LINK="https://buy.stripe.com/4gM28rcdg88c6U21vX1Jm01";
+
 const MEALS=[
   {id:"breakfast",label:"Breakfast",icon:"coffee"},
   {id:"lunch",label:"Lunch",icon:"salad"},
@@ -200,13 +204,8 @@ const DISHES=[
 ];
 const FEATURED_ID="pa-amb-oli";
 
-/* ------------------------------ SUPABASE ---------------------------- */
-const SUPABASE_URL="https://msmwaldktlrxhxvarepj.supabase.co";
-const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zbXdhbGRrdGxyeGh4dmFyZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzQwNzcsImV4cCI6MjA5NzU1MDA3N30.Lpr8P9SsTG_7i_iPORqu2gt9pffpnvaZ_oqx5wsCQwI";
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
-
 /* ------------------------------ STATE ------------------------------- */
-const S={tab:"home",user:null,openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
+const S={tab:"home",openId:null,cooking:null,cookStep:0,saved:new Set(),cooked:new Set(),pro:false,showPro:false,showScan:false,loggedIn:false,showLogin:false,scanPhase:"intro",found:{tomato:true,garlic:true,egg:true,bread:true,"olive oil":true,onion:true},servings:null,query:"",meal:"all",flavor:"all"};
 let T={id:null,total:0,left:0,running:false,done:false};
 
 /* ----------------------------- HELPERS ------------------------------ */
@@ -262,12 +261,17 @@ function glassLogo(size){
   </div>`;
 }
 
-const cover=(d,h,r,fs)=>`<div style="position:relative;height:${h}px;border-radius:${r}px;overflow:hidden;background:linear-gradient(135deg,${d.hue[0]},${d.hue[1]});display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
-  <div style="position:absolute;inset:0;opacity:.5;background-image:radial-gradient(circle at 20% 15%,rgba(255,255,255,.3),transparent 45%);"></div>
+/* auto food photo per dish (AI-generated via URL — swap any dish to a real photo by adding img:"..." to it) */
+const imgFor=(d)=>`https://image.pollinations.ai/prompt/${encodeURIComponent(d.title+", appetizing food photography, natural light, close up"+(d.flavor==="sweet"?", dessert":""))}?width=800&height=600&nologo=true&seed=${d.id.length*7}`;
+
+const cover=(d,h,r,fs)=>{
+  const src=d.img||imgFor(d);
+  return `<div style="position:relative;height:${h}px;border-radius:${r}px;overflow:hidden;background-color:${d.hue[0]};background-image:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.05) 55%),url('${src}');background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;">
   <div class="sheen"></div>
   <div style="position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.35);padding:4px 9px;border-radius:100px;">${d.tag}</div>
-  <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.25);">${d.title}</div>
+  <div style="position:relative;font-family:var(--display);font-weight:700;color:#fff;line-height:1.02;font-size:${fs}px;letter-spacing:-.5px;text-shadow:0 1px 12px rgba(0,0,0,.4);">${d.title}</div>
 </div>`;
+};
 const meta=(d)=>`<div class="meta"><span class="i">${ic("clock",{s:13,sw:2.4})} ${d.minutes} min</span><span style="opacity:.4">·</span><span class="i">${ic("flame",{s:13,sw:2.4})} ${d.level}</span></div>`;
 
 /* ----------------------------- SCREENS ------------------------------ */
@@ -305,7 +309,6 @@ function homeHTML(){
       <span class="eyebrow">Dish of the week</span>
       <div class="lift up" onclick="openDish('${f.id}')" style="margin-top:12px;border-radius:24px;overflow:hidden;position:relative;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">
         ${cover(f,240,0,36)}
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.4),transparent 55%);"></div>
         <div style="position:absolute;bottom:16px;right:16px;display:inline-flex;align-items:center;gap:8px;background:rgba(27,59,140,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3);color:#fff;padding:10px 16px;border-radius:100px;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1px;">COOK THIS ${ic("arrow-right",{s:15})}</div>
       </div>
 
@@ -368,19 +371,9 @@ function resultsHTML(){
 function savedHTML(){
   const list=DISHES.filter(d=>S.saved.has(d.id));
   return `<div style="min-height:70vh;">
-    <div class="glasspanel up" style="margin:14px 16px 0;border-radius:26px;padding:24px 20px;"><span class="eyebrow">Your kitchen</span><h2 class="display" style="font-weight:800;font-size:32px;margin:6px 0 0;letter-spacing:-.8px;color:var(--oliveDeep);">Saved</h2></div>
+    <div class="glasspanel up" style="margin:14px 16px 0;border-radius:26px;padding:24px 20px;display:flex;align-items:center;justify-content:space-between;"><div><span class="eyebrow">Your kitchen</span><h2 class="display" style="font-weight:800;font-size:32px;margin:6px 0 0;letter-spacing:-.8px;color:var(--oliveDeep);">Saved</h2></div>${list.length?`<div class="mono" style="font-weight:700;font-size:34px;color:var(--flame);">${String(list.length).padStart(2,"0")}</div>`:""}</div>
     ${list.length===0?`<div class="up glasspanel" style="margin:20px 16px;padding:40px 30px;text-align:center;border-radius:24px;"><div style="width:72px;height:72px;border-radius:100px;background:rgba(167,176,136,.3);border:1px solid rgba(255,255,255,.6);display:grid;place-items:center;margin:0 auto 18px;">${ic("bookmark",{s:30,c:"var(--olive)",sw:2})}</div><div class="display" style="font-weight:700;font-size:20px;color:var(--oliveDeep);">Nothing saved yet</div><div style="font-size:15px;color:var(--inkSoft);margin-top:8px;line-height:1.5;max-width:260px;margin-left:auto;margin-right:auto;">Tap the bookmark on any dish to keep it here for when you're ready to cook.</div></div>`:`<div style="display:flex;flex-direction:column;gap:18px;padding:18px 16px 24px;">${list.map(d=>bigCard(d)).join("")}</div>`}
   </div>`;
-}
-
-function accountBlockHTML(){
-  if(S.loggedIn&&S.user){
-    return `<div class="glasspanel" style="border-radius:20px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
-      <div style="min-width:0;"><div class="mono" style="font-size:10px;letter-spacing:1.5px;color:var(--inkSoft);text-transform:uppercase;">Signed in</div><div style="font-weight:600;font-size:14px;margin-top:3px;color:var(--oliveDeep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${S.user.email}</div></div>
-      <button class="press card" onclick="signOut()" style="flex:0 0 auto;border-radius:100px;padding:9px 16px;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--ink);">LOG OUT</button>
-    </div>`;
-  }
-  return `<button onclick="ensureLogin()" class="press" style="width:100%;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,rgba(27,59,140,.9),rgba(62,99,181,.85));backdrop-filter:blur(10px);color:#fff;border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:0 10px 24px rgba(27,59,140,.25);">${ic("lock",{s:20})}<div style="text-align:left;flex:1;"><div class="display" style="font-weight:700;font-size:16px;">Log in</div><div style="font-size:13px;color:rgba(255,255,255,.9);">Save dishes, cook mode & keep your Pro</div></div>${ic("arrow-right",{s:20})}</button>`;
 }
 
 function aboutHTML(){
@@ -392,7 +385,6 @@ function aboutHTML(){
       <p style="font-size:15px;line-height:1.55;color:var(--inkSoft);margin-top:16px;">I'm a self-taught developer learning to cook for real — technique, knife skills, the fundamentals chefs take for granted. ${BRAND} is where I share it, broken down so it actually clicks.</p>
     </div>
     <div style="padding:20px 16px;">
-      ${accountBlockHTML()}
       <div class="glasspanel" style="border-radius:20px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div><span class="eyebrow">Dishes cooked</span><div class="mono" style="font-weight:700;font-size:40px;color:var(--oliveDeep);line-height:1;margin-top:6px;">${String(S.cooked.size).padStart(2,"0")}</div></div>
         ${ic("flame",{s:40,c:"var(--flame)",f:"var(--flame)"})}
@@ -410,7 +402,6 @@ function detailHTML(d){
   const tiles=[["kcal",d.nutrition.kcal,""],["fat",d.nutrition.fat,"g"],["carbs",d.nutrition.carbs,"g"],["protein",d.nutrition.protein,"g"]];
   return `<div class="up" style="padding-bottom:140px;">
     <div style="position:relative;margin:14px 16px 0;border-radius:28px;overflow:hidden;border:1px solid var(--glassBorder);box-shadow:var(--glassShadow);">${cover(d,290,0,40)}
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),transparent 50%);"></div>
       <button class="press" onclick="back()" style="position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.55);backdrop-filter:blur(8px);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("chevron-left",{s:20})}</button>
       <button class="press" onclick="toggleSave('${d.id}')" style="position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:100px;border:1px solid rgba(255,255,255,.5);background:${sv?"rgba(27,59,140,.9)":"rgba(255,255,255,.55)"};backdrop-filter:blur(8px);color:${sv?"#fff":"var(--ink)"};display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);">${ic("bookmark",{s:18,sw:2.4,f:sv?"#fff":"none"})}</button>
     </div>
@@ -542,7 +533,7 @@ function proHTML(){
       <h2 class="display" style="font-weight:800;font-size:28px;letter-spacing:-.6px;line-height:1.05;margin:4px 0 18px;">Cook smarter, not just tastier.</h2>
       <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">${perks.map(p=>`<div style="display:flex;gap:14px;align-items:flex-start;"><div style="width:40px;height:40px;border-radius:12px;background:rgba(167,176,136,.2);border:1px solid rgba(255,255,255,.15);display:grid;place-items:center;flex:0 0 40px;">${ic(p[0],{s:19,c:"var(--sage)"})}</div><div><div style="font-weight:700;font-size:15.5px;">${p[1]}</div><div style="font-size:13.5px;color:rgba(255,255,255,.7);line-height:1.4;">${p[2]}</div></div></div>`).join("")}</div>
       <button class="btn-flame press" onclick="unlockPro()">Go Pro · ${PRO_PRICE}/mo</button>
-      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">PREVIEW ONLY · REAL PRO SAVES TO YOUR ACCOUNT</div>
+      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:12px;">SECURE CHECKOUT · POWERED BY STRIPE</div>
     </div>
   </div>`;
 }
@@ -556,18 +547,13 @@ function loginHTML(){
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:18px;">${glassLogo(56)}</div>
       <h2 class="display" style="font-weight:800;font-size:24px;letter-spacing:-.5px;line-height:1.15;text-align:center;margin-bottom:8px;">Log in to ${BRAND}</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 22px;">Saved dishes, cook mode, and Pro live with your account — so they follow you to any device.</p>
-      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:12px;">
+      <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 24px;">Saving dishes, marking what you've cooked, and cooking mode are for logged-in cooks only.</p>
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:14px;">
         ${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}
-        <input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
+        <input type="email" placeholder="you@email.com" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
       </div>
-      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:12px;">
-        ${ic("lock",{s:18,c:"rgba(255,255,255,.6)"})}
-        <input id="authPass" type="password" placeholder="Password" autocomplete="current-password" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;" />
-      </div>
-      <div id="authMsg" style="font-size:13px;color:var(--sage);text-align:center;margin-bottom:12px;min-height:16px;"></div>
-      <button class="btn-flame press" onclick="doLogin()">${ic("lock",{s:18})} LOG IN</button>
-      <button class="press" onclick="doSignUp()" style="width:100%;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;margin-top:14px;">NEW HERE? CREATE AN ACCOUNT</button>
+      <button class="btn-flame press" onclick="doLogin()">${ic("lock",{s:18})} CONTINUE</button>
+      <div style="text-align:center;font-family:var(--mono);font-size:10.5px;color:rgba(255,255,255,.4);margin-top:14px;">DEMO — LOGS YOU IN INSTANTLY HERE</div>
     </div>
   </div>`;
 }
@@ -575,7 +561,7 @@ function loginHTML(){
 /* ------------------------------- NAV -------------------------------- */
 function navHTML(){
   const items=[["home","home","HOME"],["search","search","BROWSE"],["saved","bookmark","SAVED"],["about","user","ME"]];
-  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId;return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&id==="saved"?"var(--oliveDeep)":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}</button>`;}).join("")}</div>`;
+  return `<div class="nav">${items.map(([id,icn,l])=>{const a=S.tab===id&&!S.openId;const badge=(id==="saved"&&S.saved.size)?`<span class="navbadge">${S.saved.size}</span>`:"";return `<button class="navbtn ${a?"active":""}" onclick="setTab('${id}')">${ic(icn,{s:21,sw:a?2.6:2,f:a&&id==="saved"?"var(--oliveDeep)":"none"})}<span>${l}</span>${a?'<div class="navdot"></div>':""}${badge}</button>`;}).join("")}</div>`;
 }
 
 /* ----------------------------- ACTIONS ------------------------------ */
@@ -594,42 +580,12 @@ function markCooked(id){if(!ensureLogin())return;S.cooked.has(id)?S.cooked.delet
 function setServings(v){S.servings=Math.max(1,v);render();}
 function goPro(){if(!ensureLogin())return;S.showPro=true;render();}
 function closePro(){S.showPro=false;render();}
-function unlockPro(){S.pro=true;S.showPro=false;render();}
+function unlockPro(){ if(PRO_PAYMENT_LINK){ window.location.href=PRO_PAYMENT_LINK; } else { appToast("Add your Stripe link to PRO_PAYMENT_LINK"); } }
 function openScan(){if(!ensureLogin())return;if(S.pro){S.showScan=true;S.scanPhase="intro";render();}else goPro();}
 function closeScan(){S.showScan=false;render();}
 function ensureLogin(){if(S.loggedIn)return true;S.showLogin=true;render();return false;}
 function closeLogin(){S.showLogin=false;render();}
-function authMsg(m){const el=document.getElementById("authMsg");if(el)el.textContent=m;}
-function authVals(){return{email:(document.getElementById("authEmail")||{}).value,pass:(document.getElementById("authPass")||{}).value};}
-async function refreshAuth(){
-  try{
-    const { data:{ session } } = await sb.auth.getSession();
-    S.user = session ? session.user : null;
-    S.loggedIn = !!S.user;
-    if(S.user){
-      const { data } = await sb.from("profiles").select("is_pro").eq("id",S.user.id).single();
-      S.pro = !!(data && data.is_pro);
-    } else { S.pro = false; }
-  }catch(e){ S.user=null; S.loggedIn=false; S.pro=false; }
-  render();
-}
-async function doLogin(){
-  const {email,pass}=authVals();
-  if(!email||!pass){authMsg("Enter your email and password.");return;}
-  authMsg("Logging in…");
-  const {error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){authMsg(error.message);return;}
-  S.showLogin=false; await refreshAuth();
-}
-async function doSignUp(){
-  const {email,pass}=authVals();
-  if(!email||!pass){authMsg("Enter an email and a password (6+ characters).");return;}
-  authMsg("Creating your account…");
-  const {error}=await sb.auth.signUp({email,password:pass});
-  if(error){authMsg(error.message);return;}
-  S.showLogin=false; await refreshAuth();
-}
-async function signOut(){ await sb.auth.signOut(); await refreshAuth(); }
+function doLogin(){S.loggedIn=true;S.showLogin=false;render();}
 function scanGo(){S.scanPhase="scanning";render();setTimeout(()=>{S.scanPhase="results";render();},1700);}
 function toggleFound(k){S.found[k]=!S.found[k];render();}
 function openFromScan(id){S.showScan=false;S.openId=id;S.servings=null;nav();}
@@ -672,7 +628,7 @@ function resetTimer(){clearInterval(T.id);T.left=T.total;T.running=false;T.done=
 
 /* TOAST */
 let toastT;
-function appToast(){const t=document.getElementById("toast");t.textContent="🚀 Launching soon — follow for the drop";t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
+function appToast(msg){const t=document.getElementById("toast");t.textContent=msg||"🚀 Launching soon — follow for the drop";t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
 
 /* MARQUEE build (duplicate for seamless loop) */
 (function(){
@@ -681,7 +637,7 @@ function appToast(){const t=document.getElementById("toast");t.textContent="🚀
 })();
 
 render();
-refreshAuth();
 </script>
 </body>
 </html>
+
