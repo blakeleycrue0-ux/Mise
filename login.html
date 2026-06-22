@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>MISE — your account</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  :root{--ink:#14213D;--inkSoft:#5B6B85;--oliveDeep:#0F1830;--sage:#8FA8C9;--flame:#1B3B8C;--flameSoft:#3E63B5;--display:'Bricolage Grotesque',sans-serif;--body:'Hanken Grotesk',system-ui,sans-serif;--mono:'Space Mono',monospace;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:var(--body);color:#fff;background:radial-gradient(ellipse 90% 50% at 50% 0%,rgba(62,99,181,.4),transparent 60%),rgba(11,18,38,1);}
+  .mono{font-family:var(--mono);} .display{font-family:var(--display);}
+  .wrap{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:30px 22px;}
+  .press{transition:transform .12s;cursor:pointer;} .press:active{transform:scale(.94);}
+  .btn{height:56px;border-radius:18px;border:1px solid rgba(255,255,255,.4);cursor:pointer;background:linear-gradient(135deg,var(--flame),var(--flameSoft));color:#fff;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;display:inline-flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 28px rgba(27,59,140,.35);width:100%;}
+  .btn:disabled{opacity:.55;}
+  .inp{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:0 14px;margin-bottom:10px;}
+  .inp input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:15px;padding:14px 0;font-family:inherit;}
+  @keyframes up{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  .up{animation:up .45s cubic-bezier(.2,.7,.2,1) both;}
+</style>
+</head>
+<body>
+<div class="wrap up" id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const BRAND="MISE";
+const SUPABASE_URL="https://msmwaldktlrxhxvarepj.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zbXdhbGRrdGxyeGh4dmFyZXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NzQwNzcsImV4cCI6MjA5NzU1MDA3N30.Lpr8P9SsTG_7i_iPORqu2gt9pffpnvaZ_oqx5wsCQwI";
+const ICONS={mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',lock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',"arrow-right":'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'};
+const ic=(n,o={})=>{const s=o.s||18;return `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${o.f||'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"${o.c?` style="color:${o.c}"`:''}>${ICONS[n]||''}</svg>`;};
+function logo(s){return `<div style="position:relative;width:${s}px;height:${s}px;border-radius:100px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;overflow:hidden;margin:0 auto;"><div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(62,99,181,.6),rgba(143,168,201,.3));"></div><svg viewBox="0 0 24 24" width="${Math.round(s*.5)}" height="${Math.round(s*.5)}" style="position:relative;" fill="#fff">${ICONS.flame}</svg></div>`;}
+
+let supa=null, mode="register", busy=false, err="";
+const hasPlan=(()=>{try{return !!localStorage.getItem("mise_answers");}catch(e){return false;}})();
+
+function render(){
+  const reg=mode==="register";
+  document.getElementById("root").innerHTML=`
+    ${logo(60)}
+    <h1 class="display" style="font-weight:800;font-size:26px;letter-spacing:-.6px;text-align:center;margin:18px 0 6px;">${reg?(hasPlan?"Save your plan":"Create your account"):"Welcome back"}</h1>
+    <p style="font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;text-align:center;max-width:300px;margin:0 auto 22px;">${reg?"One account keeps your dishes, recipes and buddy in sync.":"Log in to get back to your kitchen."}</p>
+    <div class="inp">${ic("mail",{s:18,c:"rgba(255,255,255,.6)"})}<input id="em" type="email" autocomplete="email" placeholder="you@email.com"/></div>
+    <div class="inp">${ic("lock",{s:18,c:"rgba(255,255,255,.6)"})}<input id="pw" type="password" autocomplete="${reg?'new-password':'current-password'}" placeholder="Password (6+ characters)"/></div>
+    ${err?`<div class="mono" style="font-size:11.5px;color:#F0815A;margin-bottom:10px;line-height:1.4;">${err}</div>`:""}
+    <button class="btn press" onclick="go()" ${busy?"disabled":""}>${busy?"…":(reg?"CREATE ACCOUNT":"LOG IN")} ${busy?"":ic("arrow-right",{s:18})}</button>
+    <button class="press" onclick="toggle()" style="display:block;margin:14px auto 0;background:none;border:none;color:rgba(255,255,255,.65);font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.5px;cursor:pointer;">${reg?"ALREADY HAVE AN ACCOUNT?  LOG IN":"NEW HERE?  CREATE ACCOUNT"}</button>`;
+}
+function toggle(){mode=mode==="register"?"login":"register";err="";render();}
+
+async function go(){
+  const email=(document.getElementById("em").value||"").trim();
+  const pass=document.getElementById("pw").value||"";
+  err="";
+  if(!email||!email.includes("@")){err="Enter a valid email.";render();return;}
+  if(pass.length<6){err="Password needs at least 6 characters.";render();return;}
+  if(!supa){err="Auth isn't ready — check your connection.";render();return;}
+  busy=true;render();
+  const reg=mode==="register";
+  try{
+    const {data,error}=reg?await supa.auth.signUp({email,password:pass}):await supa.auth.signInWithPassword({email,password:pass});
+    if(error){busy=false;err=error.message;render();return;}
+    if(reg&&(!data||!data.session)){busy=false;err="Turn OFF 'Confirm email' in Supabase → Auth so signup logs you in.";render();return;}
+    if(reg) await savePlan();
+    try{localStorage.setItem("mise_onboarded","1");}catch(e){}
+    location.href="home.html";
+  }catch(e){busy=false;err=String(e);render();}
+}
+async function savePlan(){
+  try{
+    const A=JSON.parse(localStorage.getItem("mise_answers")||"null");
+    const {data:{user}}=await supa.auth.getUser();
+    if(!user) return;
+    await supa.from("profiles").update({diet:(A&&A.diet)||"all"}).eq("id",user.id);
+    if(A){ await supa.from("profiles").update({prefs:A}).eq("id",user.id); }
+  }catch(e){}
+}
+
+if(typeof window.supabase!=="undefined"){
+  supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  supa.auth.getSession().then(({data:{session}})=>{ if(session&&session.user){location.href="home.html";} });
+}
+render();
+</script>
+</body>
+</html>
