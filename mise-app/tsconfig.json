@@ -1,0 +1,23 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@types": ["src/types"],
+      "@services": ["src/services"],
+      "@services/*": ["src/services/*"],
+      "@features": ["src/features"],
+      "@features/*": ["src/features/*"],
+      "@components": ["src/components"],
+      "@components/*": ["src/components/*"],
+      "@state": ["src/state"],
+      "@state/*": ["src/state/*"],
+      "@utils": ["src/utils"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "index.ts"],
+  "exclude": ["node_modules", "supabase"]
+}
