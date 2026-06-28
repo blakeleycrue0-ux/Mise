@@ -3,272 +3,379 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RepZero — Coming Soon</title>
+<title>FacturaRápida — Facturas profesionales en 30 segundos</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-:root { --black:#000; --white:#fff; --grey:#111; --line:#1f1f1f; --text:#555; --text2:#333; }
-html,body { height:100%; background:var(--black); color:var(--white); font-family:'Inter',sans-serif; overflow-x:hidden; }
+:root { --black:#000; --white:#fff; --grey:#0d0d0d; --card:#111; --line:#1e1e1e; --text:#666; --text2:#888; --accent:#4ade80; --accent-dim:#1a3a22; }
+html,body { background:var(--black); color:var(--white); font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-/* NOISE TEXTURE */
 body::before {
   content:'';
-  position:fixed;
-  inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events:none;
-  z-index:0;
+  position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0;
 }
 
-.container { position:relative; z-index:1; max-width:600px; margin:0 auto; padding:0 24px; min-height:100vh; display:flex; flex-direction:column; }
+.wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 24px; }
 
-/* HEADER */
-header { padding:32px 0 0; display:flex; align-items:center; justify-content:space-between; }
-.logo-wrap { display:flex; align-items:center; gap:12px; }
-.logo-img { width:32px; height:32px; object-fit:contain; filter:invert(1); opacity:0.9; }
-.logo-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; }
-.status-badge { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); border:1px solid var(--line); padding:5px 10px; border-radius:20px; }
+/* NAV */
+nav { padding:20px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:3px; }
+.logo span { color:var(--accent); }
+.nav-links { display:flex; align-items:center; gap:24px; }
+.nav-links a { color:var(--text2); font-size:14px; text-decoration:none; font-weight:500; transition:color 0.15s; }
+.nav-links a:hover { color:var(--white); }
+.btn { display:inline-flex; align-items:center; justify-content:center; padding:11px 22px; border-radius:6px; font-weight:700; font-size:13px; letter-spacing:0.5px; cursor:pointer; text-decoration:none; border:none; transition:all 0.15s; font-family:'Inter',sans-serif; }
+.btn-primary { background:var(--accent); color:#000; }
+.btn-primary:hover { opacity:0.88; }
+.btn-outline { background:transparent; color:var(--white); border:1.5px solid var(--line); }
+.btn-outline:hover { border-color:#444; }
 
 /* HERO */
-.hero { flex:1; display:flex; flex-direction:column; justify-content:center; padding:60px 0 40px; }
+.hero { padding:100px 0 80px; text-align:center; }
+.hero-badge { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:20px; padding:6px 14px; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); background:var(--accent-dim); margin-bottom:32px; }
+.hero-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(64px,12vw,110px); line-height:0.92; letter-spacing:-1px; margin-bottom:24px; }
+.hero h1 em { color:var(--accent); font-style:normal; }
+.hero-sub { color:var(--text2); font-size:18px; line-height:1.7; max-width:520px; margin:0 auto 48px; }
+.hero-sub strong { color:var(--white); }
+.hero-cta { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+.hero-note { color:var(--text); font-size:12px; margin-top:16px; }
 
-.pre-label { font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
-.pre-label::before { content:''; width:24px; height:1px; background:var(--text); }
-
-.hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(72px,18vw,120px); line-height:0.9; letter-spacing:-1px; margin-bottom:24px; }
-.hero-title span { color:var(--text2); }
-
-.hero-sub { color:var(--text); font-size:15px; line-height:1.7; max-width:400px; margin-bottom:48px; }
-.hero-sub strong { color:var(--white); font-weight:600; }
-
-/* COUNTDOWN */
-.countdown-wrap { margin-bottom:48px; }
-.countdown-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--text); margin-bottom:14px; }
-.countdown { display:flex; gap:0; }
-.count-block { flex:1; text-align:center; padding:20px 8px; background:var(--grey); border:1px solid var(--line); margin-right:-1px; }
-.count-block:first-child { border-radius:6px 0 0 6px; }
-.count-block:last-child { border-radius:0 6px 6px 0; margin-right:0; }
-.count-num { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,10vw,64px); line-height:1; }
-.count-unit { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); margin-top:4px; }
-
-/* WAITLIST FORM */
-.form-wrap { margin-bottom:40px; }
-.form-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--text); margin-bottom:12px; display:block; }
-.form-row { display:flex; gap:8px; }
-.form-input { flex:1; background:var(--grey); border:1.5px solid var(--line); border-radius:6px; padding:16px 18px; color:var(--white); font-size:15px; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.15s; -webkit-appearance:none; }
-.form-input:focus { border-color:#333; }
-.form-input::placeholder { color:var(--text); }
-.form-btn { background:var(--white); color:var(--black); border:none; padding:16px 24px; font-size:13px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; border-radius:6px; font-family:'Inter',sans-serif; white-space:nowrap; transition:opacity 0.2s; flex-shrink:0; }
-.form-btn:hover { opacity:0.85; }
-.form-btn:disabled { opacity:0.4; cursor:not-allowed; }
-.form-note { color:var(--text); font-size:11px; margin-top:10px; }
-.form-success { display:none; background:var(--grey); border:1px solid var(--line); border-radius:6px; padding:16px 18px; font-size:14px; color:var(--white); }
-.form-success strong { color:var(--white); }
-.count-display { font-size:12px; font-weight:600; color:var(--text); margin-top:8px; }
+/* SOCIAL PROOF */
+.proof { padding:48px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:center; gap:48px; flex-wrap:wrap; }
+.proof-item { text-align:center; }
+.proof-num { font-family:'Bebas Neue',sans-serif; font-size:40px; color:var(--white); line-height:1; }
+.proof-label { font-size:12px; color:var(--text); font-weight:500; margin-top:4px; }
 
 /* FEATURES */
-.features { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:48px; }
-.feature { background:var(--grey); padding:20px 16px; }
-.feature-icon { font-size:18px; margin-bottom:8px; }
-.feature-title { font-family:'Bebas Neue',sans-serif; font-size:18px; margin-bottom:4px; }
-.feature-desc { color:var(--text); font-size:11px; line-height:1.5; }
+.features { padding:96px 0; }
+.section-label { font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+.section-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,6vw,64px); line-height:1; margin-bottom:16px; }
+.section-sub { color:var(--text2); font-size:16px; line-height:1.7; max-width:480px; }
+.features-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:64px; }
+.feature-card { background:var(--card); padding:32px 28px; }
+.feature-icon { font-size:24px; margin-bottom:16px; }
+.feature-name { font-family:'Bebas Neue',sans-serif; font-size:22px; margin-bottom:8px; }
+.feature-desc { color:var(--text); font-size:13px; line-height:1.6; }
 
-/* DAY COUNTER */
-.building { display:flex; align-items:center; gap:16px; padding:16px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:40px; }
-.building-num { font-family:'Bebas Neue',sans-serif; font-size:48px; line-height:1; }
-.building-text { }
-.building-label { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); }
-.building-desc { font-size:13px; color:var(--white); margin-top:3px; }
+/* HOW IT WORKS */
+.how { padding:80px 0; }
+.steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; margin-top:64px; }
+.step { padding:32px; background:var(--card); border:1px solid var(--line); border-radius:12px; position:relative; }
+.step-num { font-family:'Bebas Neue',sans-serif; font-size:64px; color:var(--line); line-height:1; margin-bottom:16px; }
+.step-title { font-size:18px; font-weight:700; margin-bottom:8px; }
+.step-desc { color:var(--text2); font-size:14px; line-height:1.6; }
 
-/* SOCIAL */
-.social { display:flex; align-items:center; gap:16px; margin-bottom:48px; }
-.social-label { font-size:11px; color:var(--text); font-weight:600; letter-spacing:1px; }
-.social-link { font-size:12px; font-weight:700; color:var(--white); text-decoration:none; letter-spacing:1px; border:1px solid var(--line); padding:8px 14px; border-radius:4px; transition:border-color 0.15s; }
-.social-link:hover { border-color:#444; }
+/* INVOICE PREVIEW */
+.preview-section { padding:80px 0; }
+.preview-wrap { background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; margin-top:64px; }
+.preview-header { background:var(--grey); border-bottom:1px solid var(--line); padding:12px 20px; display:flex; gap:6px; align-items:center; }
+.dot { width:10px; height:10px; border-radius:50%; }
+.dot.r { background:#ff5f57; } .dot.y { background:#febc2e; } .dot.g { background:#28c840; }
+.preview-body { padding:40px; }
+.mock-invoice { background:#fff; border-radius:8px; padding:40px; color:#111; max-width:600px; margin:0 auto; font-size:13px; }
+.mock-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
+.mock-brand { font-size:22px; font-weight:800; color:#111; }
+.mock-title { font-size:28px; font-weight:800; color:#000; }
+.mock-num { font-size:12px; color:#888; margin-top:4px; }
+.mock-row { display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; }
+.mock-section { margin-bottom:24px; }
+.mock-section-label { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#aaa; margin-bottom:8px; }
+.mock-table { width:100%; border-collapse:collapse; margin-bottom:24px; font-size:12px; }
+.mock-table th { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#aaa; padding:8px 0; border-bottom:1px solid #eee; text-align:left; }
+.mock-table td { padding:10px 0; border-bottom:1px solid #f5f5f5; }
+.mock-table td:last-child,.mock-table th:last-child { text-align:right; }
+.mock-totals { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.mock-total-row { display:flex; gap:32px; font-size:12px; color:#666; }
+.mock-total-row.main { color:#000; font-size:15px; font-weight:800; border-top:2px solid #000; padding-top:8px; margin-top:4px; }
+.accent-dot { width:8px; height:8px; border-radius:50%; background:#4ade80; display:inline-block; }
+
+/* PRICING */
+.pricing { padding:80px 0; }
+.pricing-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:64px; }
+.plan { border:1px solid var(--line); border-radius:12px; padding:32px; background:var(--card); position:relative; }
+.plan.featured { border-color:var(--accent); background:var(--accent-dim); }
+.plan-badge { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border-radius:20px; white-space:nowrap; }
+.plan-name { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:4px; }
+.plan-price { font-family:'Bebas Neue',sans-serif; font-size:56px; line-height:1; margin:16px 0 4px; }
+.plan-price small { font-size:20px; font-family:'Inter',sans-serif; font-weight:500; }
+.plan-period { color:var(--text); font-size:13px; margin-bottom:24px; }
+.plan-features { list-style:none; margin-bottom:32px; }
+.plan-features li { font-size:13px; color:var(--text2); padding:8px 0; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+.plan-features li::before { content:'✓'; color:var(--accent); font-weight:700; flex-shrink:0; }
+.plan-features li.no { color:var(--text); }
+.plan-features li.no::before { content:'—'; color:var(--text); }
+
+/* CTA SECTION */
+.cta-section { padding:96px 0; text-align:center; border-top:1px solid var(--line); }
+.cta-section h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,80px); line-height:0.95; margin-bottom:24px; }
+.cta-section p { color:var(--text2); font-size:16px; margin-bottom:40px; }
 
 /* FOOTER */
-footer { padding:24px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
-.footer-logo { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; color:var(--text); }
-.footer-copy { font-size:11px; color:var(--text2); }
+footer { border-top:1px solid var(--line); padding:32px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+.footer-logo { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; color:var(--text); }
+.footer-logo span { color:var(--accent); }
+.footer-copy { font-size:12px; color:var(--text); }
+.footer-links { display:flex; gap:20px; }
+.footer-links a { font-size:12px; color:var(--text); text-decoration:none; }
+.footer-links a:hover { color:var(--white); }
 
-@media (max-width:480px) {
-  .features { grid-template-columns:1fr; }
-  .form-row { flex-direction:column; }
-  .form-btn { width:100%; }
+@media (max-width:768px) {
+  .features-grid,.steps,.pricing-grid { grid-template-columns:1fr; }
+  .proof { gap:24px; }
+  .mock-header { flex-direction:column; gap:16px; }
+  nav .nav-links { display:none; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <div class="logo-wrap">
-      <img src="logo.png" class="logo-img" alt="RepZero">
-      <div class="logo-name">REPZERO</div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">FACTURA<span>RÁPIDA</span></div>
+    <div class="nav-links">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#precios">Precios</a>
     </div>
-    <div class="status-badge">Proximamente</div>
-  </header>
-
-  <div class="hero">
-
-    <div class="pre-label">Tu gym. Tu plan. Tu IA.</div>
-
-    <div class="hero-title">EMPIEZA<br><span>DESDE</span><br>CERO</div>
-
-    <div class="hero-sub">
-      La primera app de gym que <strong>genera tu plan completo con IA</strong> — entrenamiento, nutricion y seguimiento. Personalizado para ti desde el primer dia.
+    <div style="display:flex;gap:10px;">
+      <a href="app.html" class="btn btn-outline">Entrar</a>
+      <a href="app.html" class="btn btn-primary">Empezar gratis</a>
     </div>
+  </nav>
+</div>
 
-    <!-- COUNTDOWN -->
-    <div class="countdown-wrap">
-      <div class="countdown-label">Lanzamiento en</div>
-      <div class="countdown">
-        <div class="count-block"><div class="count-num" id="cd-days">00</div><div class="count-unit">Dias</div></div>
-        <div class="count-block"><div class="count-num" id="cd-hours">00</div><div class="count-unit">Horas</div></div>
-        <div class="count-block"><div class="count-num" id="cd-mins">00</div><div class="count-unit">Min</div></div>
-        <div class="count-block"><div class="count-num" id="cd-secs">00</div><div class="count-unit">Seg</div></div>
-      </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-badge">Para autónomos españoles</div>
+    <h1>TU FACTURA<br>EN <em>30</em><br>SEGUNDOS</h1>
+    <p class="hero-sub">
+      Crea facturas profesionales con <strong>IVA e IRPF incluidos</strong>,
+      descárgalas en PDF y lleva el control de tus clientes. Sin complicaciones.
+    </p>
+    <div class="hero-cta">
+      <a href="app.html" class="btn btn-primary" style="font-size:15px;padding:16px 32px;">Crear mi primera factura</a>
+      <a href="#como-funciona" class="btn btn-outline" style="font-size:15px;padding:16px 32px;">Ver cómo funciona</a>
     </div>
-
-    <!-- WAITLIST -->
-    <div class="form-wrap">
-      <label class="form-label">Unete a la lista de espera</label>
-      <div class="form-row">
-        <input type="email" class="form-input" id="email-input" placeholder="tu@email.com" inputmode="email">
-        <button class="form-btn" id="join-btn" onclick="joinWaitlist()">Unirme</button>
-      </div>
-      <div class="form-note">Acceso anticipado + 1 mes gratis para los primeros 500.</div>
-      <div class="form-success" id="form-success">
-        <strong>Estas en la lista.</strong> Te avisamos cuando lancemos. Eres el numero <span id="user-num">—</span>.
-      </div>
-      <div class="count-display" id="count-display"></div>
-    </div>
-
-    <!-- BUILDING BADGE -->
-    <div class="building">
-      <div class="building-num" id="day-num">1</div>
-      <div class="building-text">
-        <div class="building-label">Construyendo en publico</div>
-        <div class="building-desc">Dia de 120 — sigueme en TikTok</div>
-      </div>
-    </div>
-
-    <!-- FEATURES -->
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">▣</div>
-        <div class="feature-title">Plan de gym IA</div>
-        <div class="feature-desc">Rutina semanal generada exactamente para tu nivel y objetivo.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">◎</div>
-        <div class="feature-title">Nutricion Pro</div>
-        <div class="feature-desc">Plan de comidas personalizado segun lo que te gusta comer.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">△</div>
-        <div class="feature-title">Progreso real</div>
-        <div class="feature-desc">Seguimiento de peso, racha y objetivos semanales.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">○</div>
-        <div class="feature-title">Para principiantes</div>
-        <div class="feature-desc">Sin experiencia previa. La app te lleva de la mano desde cero.</div>
-      </div>
-    </div>
-
-    <!-- SOCIAL -->
-    <div class="social">
-      <div class="social-label">Sigue el proceso</div>
-      <a href="https://tiktok.com" class="social-link">@repzero</a>
-    </div>
-
+    <p class="hero-note">Gratis para empezar · Sin tarjeta · Datos en tu navegador</p>
   </div>
+</section>
 
+<!-- SOCIAL PROOF -->
+<div class="wrap">
+  <div class="proof">
+    <div class="proof-item"><div class="proof-num">3M+</div><div class="proof-label">Autónomos en España</div></div>
+    <div class="proof-item"><div class="proof-num">30s</div><div class="proof-label">Para hacer una factura</div></div>
+    <div class="proof-item"><div class="proof-num">100%</div><div class="proof-label">Legal en España</div></div>
+    <div class="proof-item"><div class="proof-num">0€</div><div class="proof-label">Para empezar</div></div>
+  </div>
+</div>
+
+<!-- INVOICE PREVIEW -->
+<section class="preview-section">
+  <div class="wrap">
+    <div class="section-label">Vista previa</div>
+    <div class="section-title">FACTURAS QUE<br>IMPRESIONAN</div>
+    <div class="preview-wrap">
+      <div class="preview-header">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <span style="font-size:12px;color:#555;margin-left:8px;">FacturaRápida — Editor</span>
+      </div>
+      <div class="preview-body">
+        <div class="mock-invoice">
+          <div class="mock-header">
+            <div>
+              <div class="mock-brand">TU EMPRESA S.L.</div>
+              <div style="color:#888;font-size:12px;margin-top:4px;">NIF: B12345678</div>
+              <div style="color:#888;font-size:12px;">Calle Mayor 1, 28001 Madrid</div>
+              <div style="color:#888;font-size:12px;">hola@tuempresa.es</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="mock-title">FACTURA</div>
+              <div class="mock-num">Nº 2026-001</div>
+              <div style="margin-top:12px;font-size:12px;color:#888;">Fecha: 28/06/2026</div>
+              <div style="font-size:12px;color:#888;">Vence: 28/07/2026</div>
+            </div>
+          </div>
+          <div class="mock-section">
+            <div class="mock-section-label">Facturar a</div>
+            <div style="font-weight:700;">Cliente Ejemplo S.A.</div>
+            <div style="color:#888;">CIF: A87654321</div>
+            <div style="color:#888;">Paseo de la Castellana 100, 28046 Madrid</div>
+          </div>
+          <table class="mock-table">
+            <thead>
+              <tr><th>Descripción</th><th>Cant.</th><th>Precio</th><th>IVA</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Diseño web corporativo</td><td>1</td><td>1.500,00€</td><td>21%</td><td>1.815,00€</td></tr>
+              <tr><td>Mantenimiento mensual</td><td>3</td><td>200,00€</td><td>21%</td><td>726,00€</td></tr>
+            </tbody>
+          </table>
+          <div class="mock-totals">
+            <div class="mock-total-row"><span>Base imponible</span><span>2.100,00€</span></div>
+            <div class="mock-total-row"><span>IVA 21%</span><span>441,00€</span></div>
+            <div class="mock-total-row" style="color:#e44;"><span>IRPF -15%</span><span>-315,00€</span></div>
+            <div class="mock-total-row main"><span>TOTAL</span><span>2.226,00€</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="como-funciona">
+  <div class="wrap">
+    <div class="section-label">Funcionalidades</div>
+    <div class="section-title">TODO LO QUE<br>NECESITAS</div>
+    <p class="section-sub">Diseñado específicamente para autónomos españoles. Sin burocracia, sin curva de aprendizaje.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧾</div>
+        <div class="feature-name">IVA e IRPF automáticos</div>
+        <div class="feature-desc">Calcula IVA (21%, 10%, 4%) e IRPF (-15%, -7%) automáticamente según la línea.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <div class="feature-name">PDF profesional</div>
+        <div class="feature-desc">Descarga tu factura en PDF lista para enviar, con tu logo y datos de empresa.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <div class="feature-name">Gestión de clientes</div>
+        <div class="feature-desc">Guarda tus clientes y rellena sus datos en segundos en futuras facturas.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-name">Historial de facturas</div>
+        <div class="feature-desc">Accede a todas tus facturas anteriores, duplícalas y lleva el control de pagos.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔢</div>
+        <div class="feature-name">Numeración automática</div>
+        <div class="feature-desc">Numeración correlativa automática para cumplir la normativa española de facturación.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-name">Datos privados</div>
+        <div class="feature-desc">Tus facturas se guardan en tu navegador. Nadie más tiene acceso a tu información.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="wrap">
+    <div class="section-label">En 3 pasos</div>
+    <div class="section-title">ASÍ DE FÁCIL</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Introduce tus datos</div>
+        <div class="step-desc">Rellena tu información de autónomo/empresa una sola vez. Se guarda para futuras facturas.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Añade conceptos</div>
+        <div class="step-desc">Describe el servicio, cantidad y precio. El IVA y el IRPF se calculan solos.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Descarga en PDF</div>
+        <div class="step-desc">Un clic y tienes tu factura profesional lista para enviar a tu cliente.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="precios">
+  <div class="wrap">
+    <div class="section-label" style="text-align:center;">Precios</div>
+    <div class="section-title" style="text-align:center;">SIN SORPRESAS</div>
+    <div class="pricing-grid">
+
+      <div class="plan">
+        <div class="plan-name">Gratuito</div>
+        <div class="plan-price">0<small>€</small></div>
+        <div class="plan-period">para siempre</div>
+        <ul class="plan-features">
+          <li>3 facturas al mes</li>
+          <li>1 cliente guardado</li>
+          <li>Descarga en PDF</li>
+          <li>IVA e IRPF automáticos</li>
+          <li class="no">Clientes ilimitados</li>
+          <li class="no">Historial completo</li>
+          <li class="no">Facturas recurrentes</li>
+        </ul>
+        <a href="app.html" class="btn btn-outline" style="width:100%;">Empezar gratis</a>
+      </div>
+
+      <div class="plan featured">
+        <div class="plan-badge">MÁS POPULAR</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">4<small>,99€</small></div>
+        <div class="plan-period">al mes · cancela cuando quieras</div>
+        <ul class="plan-features">
+          <li>Facturas ilimitadas</li>
+          <li>Clientes ilimitados</li>
+          <li>Descarga en PDF</li>
+          <li>IVA e IRPF automáticos</li>
+          <li>Historial completo</li>
+          <li>Duplicar facturas</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <a href="app.html" class="btn btn-primary" style="width:100%;">Empezar 14 días gratis</a>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Business</div>
+        <div class="plan-price">14<small>,99€</small></div>
+        <div class="plan-period">al mes · para equipos</div>
+        <ul class="plan-features">
+          <li>Todo lo de Pro</li>
+          <li>Múltiples empresas</li>
+          <li>Facturas recurrentes</li>
+          <li>Exportar a Excel/CSV</li>
+          <li>Logo personalizado</li>
+          <li>API de integración</li>
+          <li>Soporte 24h</li>
+        </ul>
+        <a href="app.html" class="btn btn-outline" style="width:100%;">Contactar</a>
+      </div>
+
+    </div>
+    <p style="text-align:center;color:var(--text);font-size:13px;margin-top:24px;">
+      100 clientes Pro = <strong style="color:var(--accent);">499€/mes</strong> · La meta es alcanzable.
+    </p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="wrap">
+    <h2>DEJA DE<br>PERDER TIEMPO<br>CON FACTURAS</h2>
+    <p>Empieza gratis. Sin tarjeta de crédito. Tu primera factura en menos de 2 minutos.</p>
+    <a href="app.html" class="btn btn-primary" style="font-size:16px;padding:18px 40px;">Crear mi primera factura gratis</a>
+  </div>
+</section>
+
+<div class="wrap">
   <footer>
-    <div class="footer-logo">REPZERO</div>
-    <div class="footer-copy">2026 — Construido en 40 dias</div>
+    <div class="footer-logo">FACTURA<span>RÁPIDA</span></div>
+    <div class="footer-links">
+      <a href="#">Privacidad</a>
+      <a href="#">Términos</a>
+      <a href="#">Contacto</a>
+    </div>
+    <div class="footer-copy">2026 · Hecho para autónomos españoles</div>
   </footer>
 </div>
 
-<script>
-// COUNTDOWN — launch date: 120 days from start
-var startDate = new Date('2026-06-28');
-var launchDate = new Date(startDate.getTime() + 40 * 24 * 60 * 60 * 1000);
-
-function updateCountdown() {
-  var now = new Date();
-  var diff = launchDate - now;
-  if (diff <= 0) {
-    document.getElementById('cd-days').textContent = '00';
-    document.getElementById('cd-hours').textContent = '00';
-    document.getElementById('cd-mins').textContent = '00';
-    document.getElementById('cd-secs').textContent = '00';
-    return;
-  }
-  var days = Math.floor(diff / (1000*60*60*24));
-  var hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-  var mins = Math.floor((diff % (1000*60*60)) / (1000*60));
-  var secs = Math.floor((diff % (1000*60)) / 1000);
-  document.getElementById('cd-days').textContent = String(days).padStart(2,'0');
-  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
-  document.getElementById('cd-mins').textContent = String(mins).padStart(2,'0');
-  document.getElementById('cd-secs').textContent = String(secs).padStart(2,'0');
-}
-setInterval(updateCountdown, 1000);
-updateCountdown();
-
-// DAY COUNTER
-var daysSinceStart = Math.floor((new Date() - startDate) / (1000*60*60*24)) + 1;
-document.getElementById('day-num').textContent = Math.min(daysSinceStart, 40);
-
-// WAITLIST — uses localStorage to simulate
-var waitlist = JSON.parse(localStorage.getItem('rz_waitlist') || '[]');
-var baseCount = 127;
-
-function updateCountDisplay() {
-  var total = baseCount + waitlist.length;
-  var el = document.getElementById('count-display');
-  if (el && waitlist.length > 0) {
-    el.textContent = total + ' personas en la lista de espera';
-  }
-}
-updateCountDisplay();
-
-function joinWaitlist() {
-  var email = document.getElementById('email-input').value.trim();
-  var btn = document.getElementById('join-btn');
-
-  if (!email || !email.includes('@')) {
-    document.getElementById('email-input').style.borderColor = '#ff4444';
-    return;
-  }
-  document.getElementById('email-input').style.borderColor = '';
-
-  if (waitlist.includes(email)) {
-    var pos = waitlist.indexOf(email) + 1 + baseCount;
-    document.getElementById('form-success').style.display = 'block';
-    document.getElementById('user-num').textContent = pos;
-    document.querySelector('.form-row').style.display = 'none';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Guardando...';
-
-  setTimeout(function() {
-    waitlist.push(email);
-    localStorage.setItem('rz_waitlist', JSON.stringify(waitlist));
-    var pos = waitlist.length + baseCount;
-    document.getElementById('user-num').textContent = pos;
-    document.getElementById('form-success').style.display = 'block';
-    document.querySelector('.form-row').style.display = 'none';
-    updateCountDisplay();
-  }, 800);
-}
-
-document.getElementById('email-input').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') joinWaitlist();
-});
-</script>
 </body>
 </html>

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FacturaRápida — Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#0a0a0a; --surface:#111; --card:#161616; --line:#1e1e1e;
+  --text:#ccc; --text2:#666; --white:#fff; --accent:#4ade80; --accent-dim:#1a3a22;
+  --danger:#ff4444; --warn:#ffaa00;
+}
+html,body { height:100%; background:var(--bg); color:var(--white); font-family:'Inter',sans-serif; font-size:14px; }
+
+/* LAYOUT */
+.app-wrap { display:flex; flex-direction:column; height:100vh; }
+.app-nav { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:52px; background:var(--surface); border-bottom:1px solid var(--line); flex-shrink:0; }
+.app-body { display:flex; flex:1; overflow:hidden; }
+.panel-form { width:420px; flex-shrink:0; overflow-y:auto; border-right:1px solid var(--line); background:var(--surface); }
+.panel-preview { flex:1; overflow:auto; background:#e5e7eb; padding:32px; display:flex; flex-direction:column; align-items:center; }
+.panel-history { width:260px; flex-shrink:0; border-left:1px solid var(--line); overflow-y:auto; background:var(--surface); }
+
+/* NAV */
+.logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+.logo span { color:var(--accent); }
+.nav-actions { display:flex; gap:8px; align-items:center; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; border:none; font-family:'Inter',sans-serif; letter-spacing:0.3px; transition:all 0.15s; }
+.btn-primary { background:var(--accent); color:#000; }
+.btn-primary:hover { opacity:0.85; }
+.btn-ghost { background:transparent; color:var(--text); border:1px solid var(--line); }
+.btn-ghost:hover { border-color:#444; color:var(--white); }
+.btn-danger { background:transparent; color:var(--danger); border:1px solid #2a1111; }
+.btn-danger:hover { background:#2a1111; }
+
+/* FORM */
+.form-section { padding:16px 20px; border-bottom:1px solid var(--line); }
+.form-section-title { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--accent); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.form-group { margin-bottom:10px; }
+.form-group label { display:block; font-size:11px; font-weight:600; color:var(--text2); margin-bottom:4px; letter-spacing:0.5px; }
+.form-control { width:100%; background:var(--card); border:1.5px solid var(--line); border-radius:6px; padding:8px 12px; color:var(--white); font-size:13px; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.15s; }
+.form-control:focus { border-color:#333; }
+.form-control::placeholder { color:#333; }
+.form-row { display:flex; gap:8px; }
+.form-row .form-group { flex:1; }
+select.form-control { cursor:pointer; }
+select.form-control option { background:var(--card); }
+
+/* ITEMS TABLE */
+.items-header { display:grid; grid-template-columns:1fr 56px 80px 64px 24px; gap:6px; padding:0 20px 6px; }
+.items-header span { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text2); }
+.item-row { display:grid; grid-template-columns:1fr 56px 80px 64px 24px; gap:6px; padding:6px 20px; align-items:center; border-top:1px solid var(--line); }
+.item-row .form-control { padding:6px 8px; font-size:12px; }
+.item-row input[type="number"] { text-align:right; }
+.remove-btn { background:none; border:none; color:var(--text2); cursor:pointer; font-size:16px; line-height:1; padding:4px; border-radius:4px; }
+.remove-btn:hover { color:var(--danger); background:#2a1111; }
+.add-item-btn { display:flex; align-items:center; gap:6px; margin:10px 20px; background:none; border:1px dashed var(--line); border-radius:6px; padding:8px 12px; color:var(--text2); font-size:12px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; width:calc(100% - 40px); justify-content:center; transition:all 0.15s; }
+.add-item-btn:hover { border-color:#444; color:var(--white); }
+
+/* TOTALS IN FORM */
+.totals-preview { padding:16px 20px; background:var(--card); }
+.totals-preview .t-row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; color:var(--text); border-bottom:1px solid var(--line); }
+.totals-preview .t-row:last-child { border:none; font-size:15px; font-weight:700; color:var(--white); }
+.totals-preview .t-row.irpf { color:var(--danger); }
+
+/* HISTORY PANEL */
+.history-title { padding:14px 16px; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text2); border-bottom:1px solid var(--line); }
+.history-empty { padding:24px 16px; color:var(--text2); font-size:12px; text-align:center; }
+.history-item { padding:12px 16px; border-bottom:1px solid var(--line); cursor:pointer; transition:background 0.1s; }
+.history-item:hover { background:var(--card); }
+.h-num { font-size:12px; font-weight:700; color:var(--accent); }
+.h-client { font-size:12px; color:var(--text); margin-top:2px; }
+.h-total { font-size:13px; font-weight:600; color:var(--white); margin-top:2px; }
+.h-date { font-size:11px; color:var(--text2); }
+
+/* INVOICE PREVIEW */
+#invoice-preview {
+  width:210mm; background:#fff; padding:16mm 16mm 20mm; color:#111;
+  font-family:'Inter',sans-serif; font-size:11pt; line-height:1.5;
+  box-shadow:0 8px 40px rgba(0,0,0,0.25); min-height:297mm;
+}
+.inv-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32pt; }
+.inv-from { }
+.inv-from-name { font-size:18pt; font-weight:800; color:#000; }
+.inv-from-nif { font-size:9pt; color:#888; margin-top:2pt; }
+.inv-from-addr { font-size:9pt; color:#888; }
+.inv-title-block { text-align:right; }
+.inv-title { font-size:30pt; font-weight:900; color:#000; letter-spacing:-1px; }
+.inv-num { font-size:9pt; color:#888; margin-top:2pt; }
+.inv-dates { font-size:9pt; color:#888; margin-top:8pt; }
+.inv-divider { border:none; border-top:2px solid #000; margin:16pt 0; }
+.inv-to-label { font-size:8pt; font-weight:700; letter-spacing:2pt; text-transform:uppercase; color:#aaa; margin-bottom:6pt; }
+.inv-to-name { font-size:12pt; font-weight:700; color:#000; }
+.inv-to-sub { font-size:9pt; color:#888; }
+.inv-table { width:100%; border-collapse:collapse; margin:24pt 0; }
+.inv-table th { font-size:8pt; font-weight:700; letter-spacing:1.5pt; text-transform:uppercase; color:#aaa; padding:6pt 0; border-bottom:1.5pt solid #000; text-align:left; }
+.inv-table th.r,.inv-table td.r { text-align:right; }
+.inv-table td { padding:8pt 0; border-bottom:0.5pt solid #eee; font-size:10pt; vertical-align:top; }
+.inv-table td.desc { max-width:220pt; }
+.inv-totals { display:flex; justify-content:flex-end; }
+.inv-totals-table { width:240pt; }
+.inv-tot-row { display:flex; justify-content:space-between; padding:5pt 0; font-size:10pt; color:#555; }
+.inv-tot-row.irpf { color:#e44; }
+.inv-tot-row.main { border-top:2pt solid #000; margin-top:4pt; padding-top:8pt; font-size:13pt; font-weight:800; color:#000; }
+.inv-notes { margin-top:24pt; padding-top:16pt; border-top:0.5pt solid #ddd; }
+.inv-notes-label { font-size:8pt; font-weight:700; letter-spacing:2pt; text-transform:uppercase; color:#aaa; margin-bottom:6pt; }
+.inv-notes-text { font-size:9pt; color:#666; }
+.inv-footer { margin-top:auto; padding-top:24pt; border-top:0.5pt solid #ddd; display:flex; justify-content:space-between; font-size:8pt; color:#aaa; }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--accent); color:#000; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:700; z-index:9999; opacity:0; transition:opacity 0.2s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+/* TAB BAR (mobile) */
+@media (max-width:900px) {
+  .panel-history { display:none; }
+  .panel-form { width:320px; }
+}
+@media (max-width:600px) {
+  .app-body { flex-direction:column; }
+  .panel-form { width:100%; border-right:none; border-bottom:1px solid var(--line); max-height:50vh; }
+  .panel-preview { padding:16px; }
+  #invoice-preview { width:100%; font-size:9pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrap">
+
+  <!-- TOP NAV -->
+  <nav class="app-nav">
+    <a href="index.html" style="text-decoration:none;">
+      <div class="logo">FACTURA<span>RÁPIDA</span></div>
+    </a>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" onclick="newInvoice()">+ Nueva</button>
+      <button class="btn btn-ghost" onclick="saveInvoice()">Guardar</button>
+      <button class="btn btn-primary" onclick="downloadPDF()">⬇ Descargar PDF</button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- FORM PANEL -->
+    <div class="panel-form">
+
+      <!-- YOUR INFO -->
+      <div class="form-section">
+        <div class="form-section-title">
+          Tu información
+          <span style="color:var(--text2);font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;cursor:pointer;" onclick="toggleSection('from')">▾ colapsar</span>
+        </div>
+        <div id="section-from">
+          <div class="form-group">
+            <label>Nombre / Empresa</label>
+            <input class="form-control" id="from-name" placeholder="Tu Empresa S.L." oninput="updatePreview()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>NIF / CIF</label>
+              <input class="form-control" id="from-nif" placeholder="B12345678" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input class="form-control" id="from-phone" placeholder="612 345 678" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input class="form-control" id="from-addr" placeholder="Calle Mayor 1" oninput="updatePreview()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Ciudad</label>
+              <input class="form-control" id="from-city" placeholder="Madrid" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label>Código postal</label>
+              <input class="form-control" id="from-zip" placeholder="28001" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" id="from-email" type="email" placeholder="hola@empresa.es" oninput="updatePreview()">
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICE DETAILS -->
+      <div class="form-section">
+        <div class="form-section-title">Datos de la factura</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Número de factura</label>
+            <input class="form-control" id="inv-num" placeholder="2026-001" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Fecha de emisión</label>
+            <input class="form-control" id="inv-date" type="date" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha de vencimiento</label>
+            <input class="form-control" id="inv-due" type="date" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Moneda</label>
+            <select class="form-control" id="inv-currency" onchange="updatePreview()">
+              <option value="€">€ Euro</option>
+              <option value="$">$ Dólar</option>
+              <option value="£">£ Libra</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENT -->
+      <div class="form-section">
+        <div class="form-section-title">
+          Cliente
+          <select id="client-selector" style="font-size:11px;background:var(--card);border:1px solid var(--line);color:var(--text);padding:2px 6px;border-radius:4px;cursor:pointer;" onchange="loadClient(this.value)">
+            <option value="">Seleccionar guardado...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nombre / Empresa</label>
+          <input class="form-control" id="to-name" placeholder="Cliente S.A." oninput="updatePreview()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>NIF / CIF</label>
+            <input class="form-control" id="to-nif" placeholder="A87654321" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" id="to-email" type="email" placeholder="factura@cliente.es" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input class="form-control" id="to-addr" placeholder="Paseo de la Castellana 100" oninput="updatePreview()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ciudad</label>
+            <input class="form-control" id="to-city" placeholder="Madrid" oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label>CP</label>
+            <input class="form-control" id="to-zip" placeholder="28046" oninput="updatePreview()">
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;margin-top:4px;" onclick="saveClient()">+ Guardar cliente</button>
+      </div>
+
+      <!-- LINE ITEMS -->
+      <div class="form-section">
+        <div class="form-section-title">Conceptos</div>
+      </div>
+      <div class="items-header">
+        <span>Descripción</span>
+        <span style="text-align:right">Cant.</span>
+        <span style="text-align:right">Precio</span>
+        <span style="text-align:right">IVA</span>
+        <span></span>
+      </div>
+      <div id="items-list"></div>
+      <button class="add-item-btn" onclick="addItem()">+ Añadir concepto</button>
+
+      <!-- IRPF TOGGLE -->
+      <div style="padding:0 20px 12px; display:flex; align-items:center; gap:10px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text);">
+          <input type="checkbox" id="apply-irpf" onchange="updatePreview()" style="accent-color:var(--accent);">
+          Aplicar IRPF
+        </label>
+        <select id="irpf-rate" class="form-control" style="width:80px;padding:4px 8px;font-size:12px;" onchange="updatePreview()">
+          <option value="15">-15%</option>
+          <option value="7">-7%</option>
+          <option value="19">-19%</option>
+        </select>
+        <span style="font-size:11px;color:var(--text2);">(autónomos)</span>
+      </div>
+
+      <!-- TOTALS PREVIEW -->
+      <div class="totals-preview">
+        <div class="t-row"><span>Base imponible</span><span id="t-base">0,00€</span></div>
+        <div class="t-row" id="t-iva-row"><span>IVA</span><span id="t-iva">0,00€</span></div>
+        <div class="t-row irpf" id="t-irpf-row" style="display:none;"><span id="t-irpf-label">IRPF -15%</span><span id="t-irpf">0,00€</span></div>
+        <div class="t-row"><span>TOTAL</span><span id="t-total">0,00€</span></div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="form-section">
+        <div class="form-section-title">Notas / Observaciones</div>
+        <div class="form-group">
+          <textarea class="form-control" id="inv-notes" rows="3" placeholder="Condiciones de pago, datos bancarios, etc." oninput="updatePreview()" style="resize:vertical;"></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PREVIEW PANEL -->
+    <div class="panel-preview">
+      <div style="width:100%;max-width:210mm;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:#888;font-weight:600;">Vista previa — A4</span>
+        <button class="btn btn-primary" onclick="downloadPDF()" style="font-size:12px;">⬇ Descargar PDF</button>
+      </div>
+      <div id="invoice-preview">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel-history">
+      <div class="history-title">Historial</div>
+      <div id="history-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var items = [];
+var history = [];
+var clients = [];
+var currency = '€';
+var editingId = null;
+
+function fmt(n) {
+  return n.toFixed(2).replace('.', ',') + currency;
+}
+
+function fmtNum(n) {
+  return n.toFixed(2).replace('.', ',');
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  var parts = d.split('-');
+  if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+  return d;
+}
+
+function addItem(desc, qty, price, iva) {
+  items.push({
+    desc: desc || '',
+    qty: qty !== undefined ? qty : 1,
+    price: price !== undefined ? price : '',
+    iva: iva !== undefined ? iva : '21'
+  });
+  renderItems();
+  updatePreview();
+}
+
+function removeItem(i) {
+  items.splice(i, 1);
+  renderItems();
+  updatePreview();
+}
+
+function renderItems() {
+  var list = document.getElementById('items-list');
+  list.innerHTML = '';
+  items.forEach(function(item, i) {
+    var row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML =
+      '<input class="form-control" placeholder="Descripción del servicio" value="' + esc(item.desc) + '" oninput="items[' + i + '].desc=this.value;updatePreview()">' +
+      '<input class="form-control" type="number" min="0" step="0.5" value="' + item.qty + '" oninput="items[' + i + '].qty=parseFloat(this.value)||0;updatePreview()">' +
+      '<input class="form-control" type="number" min="0" step="0.01" placeholder="0,00" value="' + (item.price !== '' ? item.price : '') + '" oninput="items[' + i + '].price=parseFloat(this.value)||0;updatePreview()">' +
+      '<select class="form-control" onchange="items[' + i + '].iva=this.value;updatePreview()">' +
+        '<option value="21"' + (item.iva==='21'?' selected':'') + '>21%</option>' +
+        '<option value="10"' + (item.iva==='10'?' selected':'') + '>10%</option>' +
+        '<option value="4"' + (item.iva==='4'?' selected':'') + '>4%</option>' +
+        '<option value="0"' + (item.iva==='0'?' selected':'') + '>0%</option>' +
+      '</select>' +
+      '<button class="remove-btn" onclick="removeItem(' + i + ')">×</button>';
+    list.appendChild(row);
+  });
+}
+
+function esc(s) {
+  return String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function g(id) { return document.getElementById(id).value; }
+
+function calcTotals() {
+  var base = 0, ivaTotal = 0;
+  var ivaByRate = {};
+  items.forEach(function(item) {
+    var price = parseFloat(item.price) || 0;
+    var qty = parseFloat(item.qty) || 0;
+    var line = price * qty;
+    var ivaRate = parseFloat(item.iva) || 0;
+    var ivaAmt = line * ivaRate / 100;
+    base += line;
+    ivaTotal += ivaAmt;
+    var key = item.iva + '%';
+    ivaByRate[key] = (ivaByRate[key] || 0) + ivaAmt;
+  });
+  var applyIrpf = document.getElementById('apply-irpf').checked;
+  var irpfRate = parseFloat(g('irpf-rate')) || 15;
+  var irpf = applyIrpf ? -(base * irpfRate / 100) : 0;
+  var total = base + ivaTotal + irpf;
+  return { base, ivaTotal, ivaByRate, irpf, irpfRate, total, applyIrpf };
+}
+
+function updatePreview() {
+  currency = g('inv-currency') || '€';
+  var t = calcTotals();
+
+  // Update form totals
+  document.getElementById('t-base').textContent = fmt(t.base);
+  document.getElementById('t-iva').textContent = fmt(t.ivaTotal);
+  document.getElementById('t-total').textContent = fmt(t.total);
+  if (t.applyIrpf) {
+    document.getElementById('t-irpf-row').style.display = '';
+    document.getElementById('t-irpf-label').textContent = 'IRPF -' + t.irpfRate + '%';
+    document.getElementById('t-irpf').textContent = fmt(t.irpf);
+  } else {
+    document.getElementById('t-irpf-row').style.display = 'none';
+  }
+
+  // Build invoice HTML
+  var fromName = g('from-name');
+  var fromNif = g('from-nif');
+  var fromAddr = [g('from-addr'), g('from-zip'), g('from-city')].filter(Boolean).join(', ');
+  var fromPhone = g('from-phone');
+  var fromEmail = g('from-email');
+  var toName = g('to-name');
+  var toNif = g('to-nif');
+  var toAddr = [g('to-addr'), g('to-zip'), g('to-city')].filter(Boolean).join(', ');
+  var invNum = g('inv-num');
+  var invDate = formatDate(g('inv-date'));
+  var invDue = formatDate(g('inv-due'));
+  var notes = g('inv-notes');
+
+  var rowsHtml = items.map(function(item) {
+    var price = parseFloat(item.price) || 0;
+    var qty = parseFloat(item.qty) || 0;
+    var base = price * qty;
+    var ivaAmt = base * (parseFloat(item.iva) || 0) / 100;
+    var lineTotal = base + ivaAmt;
+    return '<tr>' +
+      '<td class="desc">' + esc(item.desc || '—') + '</td>' +
+      '<td class="r">' + fmtNum(qty) + '</td>' +
+      '<td class="r">' + fmtNum(price) + currency + '</td>' +
+      '<td class="r">' + item.iva + '%</td>' +
+      '<td class="r" style="font-weight:600;">' + fmtNum(lineTotal) + currency + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var ivaRowsHtml = Object.entries(t.ivaByRate).map(function(e) {
+    return '<div class="inv-tot-row"><span>IVA ' + e[0] + '</span><span>' + fmtNum(e[1]) + currency + '</span></div>';
+  }).join('');
+
+  var html = '<div class="inv-header">' +
+    '<div class="inv-from">' +
+      '<div class="inv-from-name">' + esc(fromName || 'Tu Empresa') + '</div>' +
+      (fromNif ? '<div class="inv-from-nif">NIF/CIF: ' + esc(fromNif) + '</div>' : '') +
+      (fromAddr ? '<div class="inv-from-addr">' + esc(fromAddr) + '</div>' : '') +
+      (fromPhone ? '<div class="inv-from-addr">Tel: ' + esc(fromPhone) + '</div>' : '') +
+      (fromEmail ? '<div class="inv-from-addr">' + esc(fromEmail) + '</div>' : '') +
+    '</div>' +
+    '<div class="inv-title-block">' +
+      '<div class="inv-title">FACTURA</div>' +
+      (invNum ? '<div class="inv-num">N.º ' + esc(invNum) + '</div>' : '') +
+      (invDate ? '<div class="inv-dates">Fecha: ' + esc(invDate) + '</div>' : '') +
+      (invDue ? '<div class="inv-dates">Vence: ' + esc(invDue) + '</div>' : '') +
+    '</div>' +
+  '</div>' +
+  '<hr class="inv-divider">' +
+  '<div class="inv-to-label">Facturar a</div>' +
+  '<div class="inv-to-name">' + esc(toName || 'Cliente') + '</div>' +
+  '<div class="inv-to-sub">' + (toNif ? 'NIF/CIF: ' + esc(toNif) + ' &nbsp;·&nbsp; ' : '') + esc(toAddr) + '</div>' +
+  '<table class="inv-table">' +
+    '<thead><tr>' +
+      '<th>Descripción</th><th class="r">Cant.</th><th class="r">Precio unit.</th><th class="r">IVA</th><th class="r">Total</th>' +
+    '</tr></thead>' +
+    '<tbody>' + (rowsHtml || '<tr><td colspan="5" style="color:#bbb;padding:16pt 0;">Añade conceptos en el panel izquierdo</td></tr>') + '</tbody>' +
+  '</table>' +
+  '<div class="inv-totals"><div class="inv-totals-table">' +
+    '<div class="inv-tot-row"><span>Base imponible</span><span>' + fmtNum(t.base) + currency + '</span></div>' +
+    ivaRowsHtml +
+    (t.applyIrpf ? '<div class="inv-tot-row irpf"><span>IRPF -' + t.irpfRate + '%</span><span>' + fmtNum(t.irpf) + currency + '</span></div>' : '') +
+    '<div class="inv-tot-row main"><span>TOTAL</span><span>' + fmtNum(t.total) + currency + '</span></div>' +
+  '</div></div>' +
+  (notes ? '<div class="inv-notes"><div class="inv-notes-label">Notas</div><div class="inv-notes-text">' + esc(notes).replace(/\n/g,'<br>') + '</div></div>' : '') +
+  '<div class="inv-footer"><span>' + esc(fromName || '') + (fromNif ? ' · ' + esc(fromNif) : '') + '</span><span>Gracias por tu confianza</span></div>';
+
+  document.getElementById('invoice-preview').innerHTML = html;
+  saveFormState();
+}
+
+function downloadPDF() {
+  var el = document.getElementById('invoice-preview');
+  var num = g('inv-num') || 'factura';
+  var opt = {
+    margin: [0, 0, 0, 0],
+    filename: 'factura-' + num.replace(/[^a-zA-Z0-9]/g, '-') + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  showToast('Generando PDF...');
+  html2pdf().set(opt).from(el).save().then(function() {
+    showToast('PDF descargado');
+  });
+}
+
+function saveInvoice() {
+  var t = calcTotals();
+  var inv = {
+    id: editingId || Date.now(),
+    num: g('inv-num'),
+    date: g('inv-date'),
+    toName: g('to-name'),
+    total: t.total,
+    currency: currency,
+    form: getFormData()
+  };
+  var idx = history.findIndex(function(h) { return h.id === inv.id; });
+  if (idx >= 0) history[idx] = inv;
+  else history.unshift(inv);
+  editingId = inv.id;
+  localStorage.setItem('fr_history', JSON.stringify(history));
+  renderHistory();
+  showToast('Factura guardada');
+}
+
+function getFormData() {
+  return {
+    fromName: g('from-name'), fromNif: g('from-nif'), fromAddr: g('from-addr'),
+    fromCity: g('from-city'), fromZip: g('from-zip'), fromPhone: g('from-phone'), fromEmail: g('from-email'),
+    toName: g('to-name'), toNif: g('to-nif'), toAddr: g('to-addr'),
+    toCity: g('to-city'), toZip: g('to-zip'), toEmail: g('to-email'),
+    invNum: g('inv-num'), invDate: g('inv-date'), invDue: g('inv-due'),
+    invCurrency: g('inv-currency'), invNotes: g('inv-notes'),
+    applyIrpf: document.getElementById('apply-irpf').checked,
+    irpfRate: g('irpf-rate'),
+    items: JSON.parse(JSON.stringify(items))
+  };
+}
+
+function setFormData(d) {
+  document.getElementById('from-name').value = d.fromName || '';
+  document.getElementById('from-nif').value = d.fromNif || '';
+  document.getElementById('from-addr').value = d.fromAddr || '';
+  document.getElementById('from-city').value = d.fromCity || '';
+  document.getElementById('from-zip').value = d.fromZip || '';
+  document.getElementById('from-phone').value = d.fromPhone || '';
+  document.getElementById('from-email').value = d.fromEmail || '';
+  document.getElementById('to-name').value = d.toName || '';
+  document.getElementById('to-nif').value = d.toNif || '';
+  document.getElementById('to-addr').value = d.toAddr || '';
+  document.getElementById('to-city').value = d.toCity || '';
+  document.getElementById('to-zip').value = d.toZip || '';
+  document.getElementById('to-email').value = d.toEmail || '';
+  document.getElementById('inv-num').value = d.invNum || '';
+  document.getElementById('inv-date').value = d.invDate || '';
+  document.getElementById('inv-due').value = d.invDue || '';
+  document.getElementById('inv-currency').value = d.invCurrency || '€';
+  document.getElementById('inv-notes').value = d.invNotes || '';
+  document.getElementById('apply-irpf').checked = d.applyIrpf || false;
+  document.getElementById('irpf-rate').value = d.irpfRate || '15';
+  items = d.items ? JSON.parse(JSON.stringify(d.items)) : [];
+  renderItems();
+}
+
+function loadInvoice(id) {
+  var inv = history.find(function(h) { return h.id === id; });
+  if (!inv || !inv.form) return;
+  editingId = inv.id;
+  setFormData(inv.form);
+  updatePreview();
+}
+
+function newInvoice() {
+  if (!confirm('¿Crear nueva factura? Se perderán los cambios no guardados.')) return;
+  editingId = null;
+  var fromData = {
+    fromName: g('from-name'), fromNif: g('from-nif'), fromAddr: g('from-addr'),
+    fromCity: g('from-city'), fromZip: g('from-zip'), fromPhone: g('from-phone'), fromEmail: g('from-email')
+  };
+  setFormData(Object.assign({}, fromData, { invNum: nextInvoiceNum(), invDate: todayStr(), invDue: dueStr() }));
+  updatePreview();
+}
+
+function nextInvoiceNum() {
+  var year = new Date().getFullYear();
+  var maxNum = 0;
+  history.forEach(function(h) {
+    if (h.num) {
+      var m = h.num.match(/(\d+)$/);
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1]));
+    }
+  });
+  return year + '-' + String(maxNum + 1).padStart(3, '0');
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function dueStr() {
+  var d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
+}
+
+function renderHistory() {
+  var el = document.getElementById('history-list');
+  if (history.length === 0) {
+    el.innerHTML = '<div class="history-empty">Sin facturas guardadas.<br>Guarda una para verla aquí.</div>';
+    return;
+  }
+  el.innerHTML = history.map(function(h) {
+    return '<div class="history-item" onclick="loadInvoice(' + h.id + ')">' +
+      '<div class="h-num">Nº ' + esc(h.num || '—') + '</div>' +
+      '<div class="h-client">' + esc(h.toName || 'Sin cliente') + '</div>' +
+      '<div class="h-total">' + (h.total ? h.total.toFixed(2).replace('.', ',') + (h.currency || '€') : '—') + '</div>' +
+      '<div class="h-date">' + (h.date ? formatDate(h.date) : '') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function saveClient() {
+  var name = g('to-name');
+  if (!name) { showToast('Introduce un nombre de cliente'); return; }
+  var client = { name, nif: g('to-nif'), addr: g('to-addr'), city: g('to-city'), zip: g('to-zip'), email: g('to-email') };
+  var idx = clients.findIndex(function(c) { return c.name === name; });
+  if (idx >= 0) clients[idx] = client;
+  else clients.push(client);
+  localStorage.setItem('fr_clients', JSON.stringify(clients));
+  renderClientSelector();
+  showToast('Cliente guardado');
+}
+
+function renderClientSelector() {
+  var sel = document.getElementById('client-selector');
+  sel.innerHTML = '<option value="">Seleccionar guardado...</option>' +
+    clients.map(function(c, i) { return '<option value="' + i + '">' + esc(c.name) + '</option>'; }).join('');
+}
+
+function loadClient(idx) {
+  if (idx === '') return;
+  var c = clients[parseInt(idx)];
+  if (!c) return;
+  document.getElementById('to-name').value = c.name || '';
+  document.getElementById('to-nif').value = c.nif || '';
+  document.getElementById('to-addr').value = c.addr || '';
+  document.getElementById('to-city').value = c.city || '';
+  document.getElementById('to-zip').value = c.zip || '';
+  document.getElementById('to-email').value = c.email || '';
+  updatePreview();
+}
+
+function saveFormState() {
+  var d = getFormData();
+  localStorage.setItem('fr_draft', JSON.stringify(d));
+}
+
+function loadDraft() {
+  try {
+    var raw = localStorage.getItem('fr_draft');
+    if (raw) { setFormData(JSON.parse(raw)); return true; }
+  } catch(e) {}
+  return false;
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+function toggleSection(name) {
+  var el = document.getElementById('section-' + name);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// INIT
+(function() {
+  try { history = JSON.parse(localStorage.getItem('fr_history') || '[]'); } catch(e) { history = []; }
+  try { clients = JSON.parse(localStorage.getItem('fr_clients') || '[]'); } catch(e) { clients = []; }
+
+  var loaded = loadDraft();
+  if (!loaded) {
+    document.getElementById('inv-num').value = nextInvoiceNum();
+    document.getElementById('inv-date').value = todayStr();
+    document.getElementById('inv-due').value = dueStr();
+    addItem();
+  } else if (items.length === 0) {
+    addItem();
+  } else {
+    renderItems();
+  }
+
+  renderHistory();
+  renderClientSelector();
+  updatePreview();
+})();
+</script>
+</body>
+</html>
