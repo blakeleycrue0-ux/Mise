@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepZero — Coming Soon</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --black:#000; --white:#fff; --grey:#111; --line:#1f1f1f; --text:#555; --text2:#333; }
+html,body { height:100%; background:var(--black); color:var(--white); font-family:'Inter',sans-serif; overflow-x:hidden; }
+
+/* NOISE TEXTURE */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+}
+
+.container { position:relative; z-index:1; max-width:600px; margin:0 auto; padding:0 24px; min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+header { padding:32px 0 0; display:flex; align-items:center; justify-content:space-between; }
+.logo-wrap { display:flex; align-items:center; gap:12px; }
+.logo-img { width:32px; height:32px; object-fit:contain; filter:invert(1); opacity:0.9; }
+.logo-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; }
+.status-badge { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); border:1px solid var(--line); padding:5px 10px; border-radius:20px; }
+
+/* HERO */
+.hero { flex:1; display:flex; flex-direction:column; justify-content:center; padding:60px 0 40px; }
+
+.pre-label { font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--text); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+.pre-label::before { content:''; width:24px; height:1px; background:var(--text); }
+
+.hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(72px,18vw,120px); line-height:0.9; letter-spacing:-1px; margin-bottom:24px; }
+.hero-title span { color:var(--text2); }
+
+.hero-sub { color:var(--text); font-size:15px; line-height:1.7; max-width:400px; margin-bottom:48px; }
+.hero-sub strong { color:var(--white); font-weight:600; }
+
+/* COUNTDOWN */
+.countdown-wrap { margin-bottom:48px; }
+.countdown-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--text); margin-bottom:14px; }
+.countdown { display:flex; gap:0; }
+.count-block { flex:1; text-align:center; padding:20px 8px; background:var(--grey); border:1px solid var(--line); margin-right:-1px; }
+.count-block:first-child { border-radius:6px 0 0 6px; }
+.count-block:last-child { border-radius:0 6px 6px 0; margin-right:0; }
+.count-num { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,10vw,64px); line-height:1; }
+.count-unit { font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); margin-top:4px; }
+
+/* WAITLIST FORM */
+.form-wrap { margin-bottom:40px; }
+.form-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--text); margin-bottom:12px; display:block; }
+.form-row { display:flex; gap:8px; }
+.form-input { flex:1; background:var(--grey); border:1.5px solid var(--line); border-radius:6px; padding:16px 18px; color:var(--white); font-size:15px; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.15s; -webkit-appearance:none; }
+.form-input:focus { border-color:#333; }
+.form-input::placeholder { color:var(--text); }
+.form-btn { background:var(--white); color:var(--black); border:none; padding:16px 24px; font-size:13px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; border-radius:6px; font-family:'Inter',sans-serif; white-space:nowrap; transition:opacity 0.2s; flex-shrink:0; }
+.form-btn:hover { opacity:0.85; }
+.form-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.form-note { color:var(--text); font-size:11px; margin-top:10px; }
+.form-success { display:none; background:var(--grey); border:1px solid var(--line); border-radius:6px; padding:16px 18px; font-size:14px; color:var(--white); }
+.form-success strong { color:var(--white); }
+.count-display { font-size:12px; font-weight:600; color:var(--text); margin-top:8px; }
+
+/* FEATURES */
+.features { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:48px; }
+.feature { background:var(--grey); padding:20px 16px; }
+.feature-icon { font-size:18px; margin-bottom:8px; }
+.feature-title { font-family:'Bebas Neue',sans-serif; font-size:18px; margin-bottom:4px; }
+.feature-desc { color:var(--text); font-size:11px; line-height:1.5; }
+
+/* DAY COUNTER */
+.building { display:flex; align-items:center; gap:16px; padding:16px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-bottom:40px; }
+.building-num { font-family:'Bebas Neue',sans-serif; font-size:48px; line-height:1; }
+.building-text { }
+.building-label { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--text); }
+.building-desc { font-size:13px; color:var(--white); margin-top:3px; }
+
+/* SOCIAL */
+.social { display:flex; align-items:center; gap:16px; margin-bottom:48px; }
+.social-label { font-size:11px; color:var(--text); font-weight:600; letter-spacing:1px; }
+.social-link { font-size:12px; font-weight:700; color:var(--white); text-decoration:none; letter-spacing:1px; border:1px solid var(--line); padding:8px 14px; border-radius:4px; transition:border-color 0.15s; }
+.social-link:hover { border-color:#444; }
+
+/* FOOTER */
+footer { padding:24px 0; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+.footer-logo { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; color:var(--text); }
+.footer-copy { font-size:11px; color:var(--text2); }
+
+@media (max-width:480px) {
+  .features { grid-template-columns:1fr; }
+  .form-row { flex-direction:column; }
+  .form-btn { width:100%; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-wrap">
+      <img src="logo.png" class="logo-img" alt="RepZero">
+      <div class="logo-name">REPZERO</div>
+    </div>
+    <div class="status-badge">Proximamente</div>
+  </header>
+
+  <div class="hero">
+
+    <div class="pre-label">Tu gym. Tu plan. Tu IA.</div>
+
+    <div class="hero-title">EMPIEZA<br><span>DESDE</span><br>CERO</div>
+
+    <div class="hero-sub">
+      La primera app de gym que <strong>genera tu plan completo con IA</strong> — entrenamiento, nutricion y seguimiento. Personalizado para ti desde el primer dia.
+    </div>
+
+    <!-- COUNTDOWN -->
+    <div class="countdown-wrap">
+      <div class="countdown-label">Lanzamiento en</div>
+      <div class="countdown">
+        <div class="count-block"><div class="count-num" id="cd-days">00</div><div class="count-unit">Dias</div></div>
+        <div class="count-block"><div class="count-num" id="cd-hours">00</div><div class="count-unit">Horas</div></div>
+        <div class="count-block"><div class="count-num" id="cd-mins">00</div><div class="count-unit">Min</div></div>
+        <div class="count-block"><div class="count-num" id="cd-secs">00</div><div class="count-unit">Seg</div></div>
+      </div>
+    </div>
+
+    <!-- WAITLIST -->
+    <div class="form-wrap">
+      <label class="form-label">Unete a la lista de espera</label>
+      <div class="form-row">
+        <input type="email" class="form-input" id="email-input" placeholder="tu@email.com" inputmode="email">
+        <button class="form-btn" id="join-btn" onclick="joinWaitlist()">Unirme</button>
+      </div>
+      <div class="form-note">Acceso anticipado + 1 mes gratis para los primeros 500.</div>
+      <div class="form-success" id="form-success">
+        <strong>Estas en la lista.</strong> Te avisamos cuando lancemos. Eres el numero <span id="user-num">—</span>.
+      </div>
+      <div class="count-display" id="count-display"></div>
+    </div>
+
+    <!-- BUILDING BADGE -->
+    <div class="building">
+      <div class="building-num" id="day-num">1</div>
+      <div class="building-text">
+        <div class="building-label">Construyendo en publico</div>
+        <div class="building-desc">Dia de 120 — sigueme en TikTok</div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">▣</div>
+        <div class="feature-title">Plan de gym IA</div>
+        <div class="feature-desc">Rutina semanal generada exactamente para tu nivel y objetivo.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">◎</div>
+        <div class="feature-title">Nutricion Pro</div>
+        <div class="feature-desc">Plan de comidas personalizado segun lo que te gusta comer.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">△</div>
+        <div class="feature-title">Progreso real</div>
+        <div class="feature-desc">Seguimiento de peso, racha y objetivos semanales.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">○</div>
+        <div class="feature-title">Para principiantes</div>
+        <div class="feature-desc">Sin experiencia previa. La app te lleva de la mano desde cero.</div>
+      </div>
+    </div>
+
+    <!-- SOCIAL -->
+    <div class="social">
+      <div class="social-label">Sigue el proceso</div>
+      <a href="https://tiktok.com" class="social-link">@repzero</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-logo">REPZERO</div>
+    <div class="footer-copy">2026 — Construido en 40 dias</div>
+  </footer>
+</div>
+
+<script>
+// COUNTDOWN — launch date: 120 days from start
+var startDate = new Date('2026-06-28');
+var launchDate = new Date(startDate.getTime() + 40 * 24 * 60 * 60 * 1000);
+
+function updateCountdown() {
+  var now = new Date();
+  var diff = launchDate - now;
+  if (diff <= 0) {
+    document.getElementById('cd-days').textContent = '00';
+    document.getElementById('cd-hours').textContent = '00';
+    document.getElementById('cd-mins').textContent = '00';
+    document.getElementById('cd-secs').textContent = '00';
+    return;
+  }
+  var days = Math.floor(diff / (1000*60*60*24));
+  var hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  var mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  var secs = Math.floor((diff % (1000*60)) / 1000);
+  document.getElementById('cd-days').textContent = String(days).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(mins).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(secs).padStart(2,'0');
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// DAY COUNTER
+var daysSinceStart = Math.floor((new Date() - startDate) / (1000*60*60*24)) + 1;
+document.getElementById('day-num').textContent = Math.min(daysSinceStart, 40);
+
+// WAITLIST — uses localStorage to simulate
+var waitlist = JSON.parse(localStorage.getItem('rz_waitlist') || '[]');
+var baseCount = 127;
+
+function updateCountDisplay() {
+  var total = baseCount + waitlist.length;
+  var el = document.getElementById('count-display');
+  if (el && waitlist.length > 0) {
+    el.textContent = total + ' personas en la lista de espera';
+  }
+}
+updateCountDisplay();
+
+function joinWaitlist() {
+  var email = document.getElementById('email-input').value.trim();
+  var btn = document.getElementById('join-btn');
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('email-input').style.borderColor = '#ff4444';
+    return;
+  }
+  document.getElementById('email-input').style.borderColor = '';
+
+  if (waitlist.includes(email)) {
+    var pos = waitlist.indexOf(email) + 1 + baseCount;
+    document.getElementById('form-success').style.display = 'block';
+    document.getElementById('user-num').textContent = pos;
+    document.querySelector('.form-row').style.display = 'none';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  setTimeout(function() {
+    waitlist.push(email);
+    localStorage.setItem('rz_waitlist', JSON.stringify(waitlist));
+    var pos = waitlist.length + baseCount;
+    document.getElementById('user-num').textContent = pos;
+    document.getElementById('form-success').style.display = 'block';
+    document.querySelector('.form-row').style.display = 'none';
+    updateCountDisplay();
+  }, 800);
+}
+
+document.getElementById('email-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') joinWaitlist();
+});
+</script>
+</body>
+</html>
